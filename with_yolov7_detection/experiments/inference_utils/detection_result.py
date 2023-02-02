@@ -49,5 +49,6 @@ class DetectionResult:
         self.box = Box(x, y, w, h)
         self.conf = conf
         self.cls = cls
+
     def __str__(self):
         return f"{str(self.box)}, cls = {self.cls}, conf = {self.conf}"
