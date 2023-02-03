@@ -20,7 +20,7 @@ class StateOfArtDetector(SingleObjectTrackerBase):
     def is_available(self, timestamp: int) -> bool:
         return True
 
-    def process_frame(self, frame, timestamp: int) -> Box | None:
+    def process_frame(self, frame, timestamp: int) -> Box:
         results = self.detector.run(frame)
         if len(results) == 0:
             return None

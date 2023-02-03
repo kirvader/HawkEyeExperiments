@@ -21,7 +21,7 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
     def is_available(self, timestamp: int) -> bool:
         return timestamp - self.last_inference_start_time >= self.detector_inference_time
 
-    def process_frame(self, frame, timestamp: int) -> Box | None:
+    def process_frame(self, frame, timestamp: int) -> Box:
         self.last_inference_start_time = timestamp
         results = self.detector.run(frame)
         if len(results) == 0:
