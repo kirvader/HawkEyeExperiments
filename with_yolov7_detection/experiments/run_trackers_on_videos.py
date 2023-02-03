@@ -23,7 +23,7 @@ def parse_args():
     """)
     parser.add_argument('--results_directory', type=str, help="""
         This is a results directory where all the output will be stored.
-        It will be created from scratch even if there are intermidiate folders.
+        It will be created from scratch even if there are intermediate folders.
     """)
     parser.add_argument('--trackers', nargs='+', default=[], help="""
         List of tracker names:
