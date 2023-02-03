@@ -13,7 +13,7 @@ from experiments.tracker_base import SingleObjectTrackerBase
 
 class StateOfArtDetector(SingleObjectTrackerBase):
     def __init__(self, inference_time: int = 350, tracking_cls: int = 32):
-        self.detector = YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls]))
+        self.detector = YOLOv7SingleDetectionRunner(Args(weights="yolov7-e6e.pt", classes=[tracking_cls]))
         self.detector_inference_time = inference_time
         self.tracking_cls = tracking_cls
 
