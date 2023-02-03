@@ -30,6 +30,7 @@ def parse_args():
         - state_of_art_detector = YOLOv7 detection applied to each frame. Main trick here that this 
         - pure_yolov7_detector = YOLOv7 simple detection with "real" latency.
     """)
+    parser.add_argument('--debug_mode', action='store_true', help="If turned on then it will show current video output")
 
     return parser.parse_args()
 
@@ -61,4 +62,8 @@ if __name__ == "__main__":
             result_video_output_filename = str(current_results_folder / "visualization.mp4")
             result_raw_output_filename = str(current_results_folder / "raw.json")
 
-            run_solution(detector, current_video_path, result_video_output_filename, result_raw_output_filename)
+            run_solution(detector,
+                         current_video_path,
+                         result_video_output_filename,
+                         result_raw_output_filename,
+                         args.debug_mode)

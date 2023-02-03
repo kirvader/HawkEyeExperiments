@@ -12,17 +12,19 @@ from experiments.tracker_base import SingleObjectTrackerBase
 def run_solution(tracker_impl: SingleObjectTrackerBase,
                  video_input_source: str,
                  video_output_source: str,
-                 json_results_path: str):
-    project_root = Path(__file__).parent.parent
-    in_cap = cv2.VideoCapture(str(project_root / video_input_source))
+                 json_results_path: str,
+                 debug_mode=False):
+    in_cap = cv2.VideoCapture(video_input_source)
+    if not in_cap.opened():
+        print("Cannot open provided video source!")
+        return
     width = int(in_cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float `width`
     height = int(in_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
     fps = int(in_cap.get(cv2.CAP_PROP_FPS))
-    # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    out_cap = cv2.VideoWriter(str(project_root / video_output_source), cv2.VideoWriter_fourcc('M','J','P','G'), fps, (width, height))
+    out_cap = cv2.VideoWriter(video_output_source, cv2.VideoWriter_fourcc('M','J','P','G'), fps, (width, height))
 
     status, frame = in_cap.read()
-    raw_results_file = open(str(project_root / json_results_path), "w")
+    raw_results_file = open(json_results_path, "w")
     raw_results_file.write("[\n")
 
     current_index = 0
@@ -49,9 +51,8 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
                 json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection).to_dict(), indent=4))
 
         out_cap.write(frame)
-        cv2.imshow("result", frame)
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
+        if debug_mode:
+            cv2.imshow("result", frame)
         status, frame = in_cap.read()
         current_index += 1
         current_time += SECOND / fps
