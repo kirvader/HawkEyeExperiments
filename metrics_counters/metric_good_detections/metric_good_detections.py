@@ -23,6 +23,11 @@ class DetectionCounter:
         names = ["Detected right", "Not detected right", "Detected wrong", "Not detected wrong"]
         colors = ['#00ff00', '#257a25', '#ff0000', '#cc4e4e']
         plt.pie(values, labels=names, colors=colors, labeldistance=1.2)
+
+        my_circle = plt.Circle((0, 0), 0.6, color='white')
+        p = plt.gcf()
+        p.gca().add_artist(my_circle)
+
         plt.show()
 
 
@@ -79,6 +84,16 @@ class MetricGoodDetections(MetricCounterBase):
                 "comparing_to": raw_state_of_art_results_filename
             }, indent=4))
 
+        videos = ["1.mp4"]
+        frames_handled = [len(considering_data)]
+        all_frames_count = [frames_quantity - len(considering_data)]
+
+        b1 = plt.barh(videos, frames_handled, color="blue")
+
+        b2 = plt.barh(videos, all_frames_count, left=frames_handled, color="gray")
+
+        plt.legend([b1, b2], ["Handled", "Not handled"], title="Efficiency", loc="upper right")
+        plt.show()
         detections_counter.plot()
 
 
