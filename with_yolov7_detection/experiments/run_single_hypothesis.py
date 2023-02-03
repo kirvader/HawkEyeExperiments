@@ -16,7 +16,7 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
                  debug_mode=False):
     in_cap = cv2.VideoCapture(video_input_source)
     if in_cap is None or not in_cap.isOpened():
-        print("Cannot open provided video source!")
+        print(f"Cannot open provided video source \"{video_input_source}\"")
         return
     width = int(in_cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float `width`
     height = int(in_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
