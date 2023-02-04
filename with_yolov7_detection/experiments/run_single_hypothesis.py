@@ -22,6 +22,7 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
     height = int(in_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
     fps = int(in_cap.get(cv2.CAP_PROP_FPS))
     out_cap = cv2.VideoWriter(video_output_source, cv2.VideoWriter_fourcc(*"DIVX"), fps, (width, height))
+    length = int(in_cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     status, frame = in_cap.read()
     raw_results_file = open(json_results_path, "w")
@@ -37,6 +38,7 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
                                          PREDICTION_AREA_LINE_COLOR,
                                          PREDICTION_AREA_LINE_THICKNESS)
 
+            print(f"({current_index}/{length})", end="")
             last_detection = tracker_impl.process_frame(frame, current_time)
 
             if last_detection is not None:
