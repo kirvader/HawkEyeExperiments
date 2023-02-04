@@ -21,7 +21,7 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
     width = int(in_cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float `width`
     height = int(in_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
     fps = int(in_cap.get(cv2.CAP_PROP_FPS))
-    out_cap = cv2.VideoWriter(video_output_source, cv2.VideoWriter_fourcc('M','J','P','G'), fps, (width, height))
+    out_cap = cv2.VideoWriter(video_output_source, cv2.VideoWriter_fourcc(*"DIVX"), fps, (width, height))
 
     status, frame = in_cap.read()
     raw_results_file = open(json_results_path, "w")
