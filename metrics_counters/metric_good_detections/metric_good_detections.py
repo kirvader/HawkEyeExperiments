@@ -121,7 +121,9 @@ class MetricGoodDetections(MetricCounterBase):
             result_figure = plt.figure(figsize=(25, 25))
             for video_index in range(len(video_names)):
                 with open(path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}.json") as f:
-                    overall_results.take_into_account(DetectionResults.from_dict(json.load(f)))
+                    lol = json.load(f)
+                    print(lol)
+                    overall_results.take_into_account(DetectionResults.from_dict(lol))
 
                 index_in_grid = tracker_index * 2 * columns + video_index + 1
                 filename = path / video_names[
