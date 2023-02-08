@@ -91,6 +91,8 @@ class DetectionResults:
     def plot(self, filename):
         figure = plt.figure(figsize=(25, 25))
         figure.add_subplot(2, 1, 2)
+        print(self.detections_run)
+        print(self.frames_quantity - self.detections_run)
         plot_single_horizontal_chart([""], self.detections_run, self.frames_quantity - self.detections_run)
 
         figure.add_subplot(2, 1, 1)
@@ -112,11 +114,11 @@ class MetricGoodDetections(MetricCounterBase):
     def plot_all_on_one(self, results_folder, tracker_names, video_names):
         columns = len(video_names)
         rows = 2 * len(tracker_names)
-        result_figure = plt.figure(figsize=(25, 25))
 
         for tracker_index in range(len(tracker_names)):
             path = Path(results_folder) / tracker_names[tracker_index]
             overall_results = DetectionResults()
+            result_figure = plt.figure(figsize=(25, 25))
             for video_index in range(len(video_names)):
                 with open(path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}.json") as f:
                     overall_results.take_into_account(DetectionResults.from_dict(json.load(f)))
