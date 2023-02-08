@@ -52,8 +52,6 @@ if __name__ == "__main__":
     for tracker_name in args.trackers:
         current_tracker_results_folder = results_directory / tracker_name
         current_tracker_results_folder.mkdir(parents=True, exist_ok=True)
-
-        detector = get_tracker_by_name(tracker_name)
         for video_name in args.video_names:
             print(tracker_name, " ", video_name)
             current_video_path = str(stored_videos_directory / f"{video_name}.mp4")
@@ -61,6 +59,7 @@ if __name__ == "__main__":
             current_results_folder.mkdir(parents=True, exist_ok=True)
             result_video_output_filename = str(current_results_folder / "visualization.mp4")
             result_raw_output_filename = str(current_results_folder / "raw.json")
+            detector = get_tracker_by_name(tracker_name)
 
             run_solution(detector,
                          current_video_path,
