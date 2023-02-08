@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
@@ -18,7 +17,7 @@ class DetectionCounter:
         self.not_detected_right = 0
         self.not_detected_wrong = 0
 
-    def plot(self):
+    def plot(self, filename_output):
         values = [self.detected_right, self.not_detected_right, self.detected_wrong, self.not_detected_wrong]
         names = ["Detected right", "Not detected right", "Detected wrong", "Not detected wrong"]
         colors = ['#00ff00', '#257a25', '#ff0000', '#cc4e4e']
@@ -28,10 +27,13 @@ class DetectionCounter:
         p = plt.gcf()
         p.gca().add_artist(my_circle)
 
-        plt.show()
+        # plt.show()
+        plt.savefig(filename_output)
+        plt.close()
 
 
-def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo, detection_counter: DetectionCounter, eps = 0.05):
+def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo,
+                          detection_counter: DetectionCounter, eps=0.05):
     if state_of_art_result.frame_index != considering_result.frame_index:
         return considering_result.frame_index - state_of_art_result.frame_index
     if state_of_art_result.detection_result is None:
@@ -40,7 +42,8 @@ def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_
         else:
             detection_counter.not_detected_wrong += 1
     else:
-        if considering_result.detection_result is None or not considering_result.detection_result.is_close_to(state_of_art_result.detection_result, eps):
+        if considering_result.detection_result is None or not considering_result.detection_result.is_close_to(
+                state_of_art_result.detection_result, eps):
             detection_counter.detected_wrong += 1
         else:
             detection_counter.detected_right += 1
@@ -50,11 +53,13 @@ def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_
 class MetricGoodDetections(MetricCounterBase):
     def count(self, raw_considering_results_filename: str, raw_state_of_art_results_filename: str):
         considering_results_file = open(raw_considering_results_filename)
-        considering_data = list(map(lambda item: FrameProcessingInfo.from_dict(item), json.load(considering_results_file)))
+        considering_data = list(
+            map(lambda item: FrameProcessingInfo.from_dict(item), json.load(considering_results_file)))
         considering_results_file.close()
 
         state_of_art_results_file = open(raw_state_of_art_results_filename)
-        state_of_art_data = list(map(lambda item: FrameProcessingInfo.from_dict(item), json.load(state_of_art_results_file)))
+        state_of_art_data = list(
+            map(lambda item: FrameProcessingInfo.from_dict(item), json.load(state_of_art_results_file)))
         state_of_art_results_file.close()
 
         frames_quantity = len(state_of_art_data)
@@ -73,7 +78,10 @@ class MetricGoodDetections(MetricCounterBase):
                 s1 += 1
                 s2 += 1
 
-        with open(Path(raw_considering_results_filename).parent / "metric_good_detections.json", "w") as json_file:
+
+        METRIC_NAME_DETECTIONS_PERCENTAGE = "METRIC_DETECTIONS_PERCENTAGE"
+
+        with open(Path(raw_considering_results_filename).parent / f"{METRIC_NAME_DETECTIONS_PERCENTAGE}.json", "w") as json_file:
             json_file.write(json.dumps({
                 "frames_quantity": frames_quantity,
                 "detections_run": len(considering_data),
@@ -84,7 +92,7 @@ class MetricGoodDetections(MetricCounterBase):
                 "comparing_to": raw_state_of_art_results_filename
             }, indent=4))
 
-        videos = ["1.mp4"]
+        videos = [""]
         frames_handled = [len(considering_data)]
         all_frames_count = [frames_quantity - len(considering_data)]
 
@@ -93,10 +101,12 @@ class MetricGoodDetections(MetricCounterBase):
         b2 = plt.barh(videos, all_frames_count, left=frames_handled, color="gray")
 
         plt.legend([b1, b2], ["Handled", "Not handled"], title="Efficiency", loc="upper right")
-        plt.show()
-        detections_counter.plot()
+        plt.savefig(str(Path(raw_considering_results_filename).parent / f"{METRIC_NAME_DETECTIONS_PERCENTAGE}_efficiency.png"))
+        plt.close()
+        detections_counter.plot(str(Path(raw_considering_results_filename).parent / f"{METRIC_NAME_DETECTIONS_PERCENTAGE}_true_false_positive_negative.png"))
 
 
 
 if __name__ == "__main__":
-    MetricGoodDetections().count("/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/1_raw.json", "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/1_raw.json")
+    MetricGoodDetections().count("/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/1_raw.json",
+                                 "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/1_raw.json")
