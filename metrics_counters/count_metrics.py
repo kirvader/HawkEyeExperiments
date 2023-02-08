@@ -34,17 +34,17 @@ def get_metrics_counter_by_name(metric_name: str):
 if __name__ == "__main__":
     args = parse_args()
     state_of_art_results_path = Path(args.results_path) / args.state_of_art_tracker_name
-    for tracker_name in args.tracker_names:
-        tracker_results_path = Path(args.results_path) / tracker_name
 
-        for video_name in args.videos:
-            state_of_art_tracker_results_for_video = state_of_art_results_path / video_name / 'raw.json'
-            current_tracker_results_for_video = tracker_results_path / video_name / 'raw.json'
+    for metric_name in args.metrics:
+        for tracker_name in args.tracker_names:
+            tracker_results_path = Path(args.results_path) / tracker_name
 
-            for metric_name in args.metrics:
+            for video_name in args.videos:
+                state_of_art_tracker_results_for_video = state_of_art_results_path / video_name / 'raw.json'
+                current_tracker_results_for_video = tracker_results_path / video_name / 'raw.json'
+
                 metric_counter = get_metrics_counter_by_name(metric_name)
                 metric_counter.count(str(current_tracker_results_for_video), str(state_of_art_tracker_results_for_video))
 
-
-
-
+        metric_counter = get_metrics_counter_by_name(metric_name)
+        metric_counter.plot_all_on_one(args.results_path, args.tracker_names, args.videos)

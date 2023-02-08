@@ -2,6 +2,7 @@ import json
 import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
+from matplotlib import image as mpimg
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
@@ -51,6 +52,30 @@ def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_
 
 
 class MetricGoodDetections(MetricCounterBase):
+    METRIC_NAME = "METRIC_DETECTIONS_PERCENTAGE"
+    def plot_all_on_one(self, results_folder, tracker_names, video_names):
+        columns = len(video_names)
+        rows = 2 * len(tracker_names)
+        result_figure = plt.figure(figsize=(100, 100))
+
+        for tracker_index in range(len(tracker_names)):
+            path = Path(results_folder) / tracker_names[tracker_index]
+            for video_index in range(len(video_names)):
+                index_in_grid = tracker_index * 2 * columns + video_index + 1
+                filename = path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}_true_false_positive_negative.png"
+                img = mpimg.imread(str(filename))
+                result_figure.add_subplot(rows, columns, index_in_grid)
+                plt.imshow(img)
+
+                index_in_grid = tracker_index * 2 * columns + columns + video_index + 1
+                filename = path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}_efficiency.png"
+                img = mpimg.imread(str(filename))
+                result_figure.add_subplot(rows, columns, index_in_grid)
+                plt.imshow(img)
+        plt.savefig(str(Path(results_folder) / f"{MetricGoodDetections.METRIC_NAME}_all_charts_on_one.pdf"))
+        plt.close()
+
+
     def count(self, raw_considering_results_filename: str, raw_state_of_art_results_filename: str):
         considering_results_file = open(raw_considering_results_filename)
         considering_data = list(
@@ -78,10 +103,7 @@ class MetricGoodDetections(MetricCounterBase):
                 s1 += 1
                 s2 += 1
 
-
-        METRIC_NAME_DETECTIONS_PERCENTAGE = "METRIC_DETECTIONS_PERCENTAGE"
-
-        with open(Path(raw_considering_results_filename).parent / f"{METRIC_NAME_DETECTIONS_PERCENTAGE}.json", "w") as json_file:
+        with open(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}.json", "w") as json_file:
             json_file.write(json.dumps({
                 "frames_quantity": frames_quantity,
                 "detections_run": len(considering_data),
@@ -101,10 +123,9 @@ class MetricGoodDetections(MetricCounterBase):
         b2 = plt.barh(videos, all_frames_count, left=frames_handled, color="gray")
 
         plt.legend([b1, b2], ["Handled", "Not handled"], title="Efficiency", loc="upper right")
-        plt.savefig(str(Path(raw_considering_results_filename).parent / f"{METRIC_NAME_DETECTIONS_PERCENTAGE}_efficiency.png"))
+        plt.savefig(str(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_efficiency.png"))
         plt.close()
-        detections_counter.plot(str(Path(raw_considering_results_filename).parent / f"{METRIC_NAME_DETECTIONS_PERCENTAGE}_true_false_positive_negative.png"))
-
+        detections_counter.plot(str(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_true_false_positive_negative.png"))
 
 
 if __name__ == "__main__":
