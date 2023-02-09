@@ -103,7 +103,7 @@ class DetectionResults:
 
     @staticmethod
     def from_dict(data):
-        return DetectionResults(data["frames_quantity"], data["frames_quantity"], data["positive_true"],
+        return DetectionResults(data["frames_quantity"], data["detections_run"], data["positive_true"],
                                 data["positive_false"], data["negative_true"], data["negative_false"],
                                 data["comparing_file"])
 
@@ -122,8 +122,8 @@ class MetricGoodDetections(MetricCounterBase):
             for video_index in range(len(video_names)):
                 with open(path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}.json") as f:
                     lol = json.load(f)
-                    print(lol)
                     overall_results.take_into_account(DetectionResults.from_dict(lol))
+                    print(overall_results.to_dict())
 
                 index_in_grid = tracker_index * 2 * columns + video_index + 1
                 filename = path / video_names[
