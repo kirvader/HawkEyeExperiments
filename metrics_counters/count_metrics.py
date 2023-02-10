@@ -25,6 +25,9 @@ def parse_args():
     parser.add_argument('--metrics', nargs='+', default=[], help="""
         Metric names with which we will try to rate our solution.
     """)
+    parser.add_argument('--max_columns', type=int, default=4, help="""
+        When printing all charts on one, max_columns will be used here
+    """)
 
     return parser.parse_args()
 
@@ -50,4 +53,4 @@ if __name__ == "__main__":
                 metric_counter.count(str(current_tracker_results_for_video), str(state_of_art_tracker_results_for_video))
 
         metric_counter = get_metrics_counter_by_name(metric_name)
-        metric_counter.plot_all_on_one(args.results_path, args.tracker_names, args.videos)
+        metric_counter.plot_all_on_one(args.results_path, args.tracker_names, args.videos, args.max_columns)
