@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
+from metrics_counters.metric_tracker_stability.metric_tracker_stability import MetricTrackerStability
 from metrics_counters.metric_good_detections.metric_good_detections import MetricGoodDetections
 
 
@@ -30,6 +31,8 @@ def parse_args():
 def get_metrics_counter_by_name(metric_name: str):
     if metric_name == "detections_percentage":
         return MetricGoodDetections()
+    if metric_name == "tracker_stability":
+        return MetricTrackerStability()
 
 if __name__ == "__main__":
     args = parse_args()
