@@ -64,7 +64,7 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
         result_figure, ax = plt.subplots(rows, columns, figsize=(20, 20))
 
         for video_index in range(len(video_names)):
-            index_in_grid = video_index
+            index_in_grid = video_index // columns, video_index % columns
             ax[index_in_grid].set_title(f"{video_names[video_index]}.mp4", fontdict={"fontsize": 20})
             ax[index_in_grid].set_xlabel("Time when object is in focus", fontdict={"fontsize": 20})
             ax[index_in_grid].set_ylabel("Time object can be not detected without losing the focus", fontdict={"fontsize": 20})
