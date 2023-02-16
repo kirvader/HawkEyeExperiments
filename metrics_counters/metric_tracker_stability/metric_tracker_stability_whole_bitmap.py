@@ -93,8 +93,8 @@ class Results:
                        data["comparing_file"])
 
 
-class MetricTrackerStability(MetricCounterBase):
-    METRIC_NAME = "METRIC_TRACKER_STABILITY"
+class MetricTrackerStabilityWholeBitmap(MetricCounterBase):
+    METRIC_NAME = "METRIC_TRACKER_STABILITY_WHOLE_BITMAP"
 
     def plot_all_on_one(self, results_folder, tracker_names, video_names, max_columns=-1):
         columns = len(video_names)
@@ -109,17 +109,17 @@ class MetricTrackerStability(MetricCounterBase):
             for video_index in range(len(video_names)):
                 index_in_grid = tracker_index * columns + video_index + 1
                 filename = tracker_folder_path / video_names[
-                    video_index] / f"{MetricTrackerStability.METRIC_NAME}_true_false_positive_negative.png"
+                    video_index] / f"{MetricTrackerStabilityWholeBitmap.METRIC_NAME}_true_false_positive_negative.png"
                 img = mpimg.imread(str(filename))
                 result_figure.add_subplot(rows, columns, index_in_grid)
                 plt.imshow(img)
 
         trackers_string = ", ".join(tracker_names)
 
-        filename = str(Path(results_folder) / f"{MetricTrackerStability.METRIC_NAME}_all_charts_on_one.pdf")
+        filename = str(Path(results_folder) / f"{MetricTrackerStabilityWholeBitmap.METRIC_NAME}_all_charts_on_one.pdf")
         plt.savefig(filename)
         plt.close()
-        print(f"All results for metric {MetricTrackerStability.METRIC_NAME} of trackers [{trackers_string}] are saved to {filename}")
+        print(f"All results for metric {MetricTrackerStabilityWholeBitmap.METRIC_NAME} of trackers [{trackers_string}] are saved to {filename}")
 
     def count(self, raw_considering_results_filename: str, raw_state_of_art_results_filename: str):
         considering_results_file = open(raw_considering_results_filename)
@@ -142,8 +142,9 @@ class MetricTrackerStability(MetricCounterBase):
                 s1 += 1
                 continue
             if index_compare_result > 0:
-                results.add_frame_result(compare_frame_results(FrameProcessingInfo(state_of_art_data[s2].frame_index, Box(0.5, 0.5, 1.0, 1.0), None),
-                                                               state_of_art_data[s2]))
+                result = compare_frame_results(FrameProcessingInfo(state_of_art_data[s2].frame_index, Box(0.5, 0.5, 1.0, 1.0), None),
+                                                               state_of_art_data[s2])
+                results.add_frame_result(result)
                 s2 += 1
                 continue
             current_pair_result = compare_frame_results(considering_data[s1], state_of_art_data[s2])
@@ -151,14 +152,14 @@ class MetricTrackerStability(MetricCounterBase):
             s1 += 1
             s2 += 1
 
-        with open(Path(raw_considering_results_filename).parent / f"{MetricTrackerStability.METRIC_NAME}.json", "w") as json_file:
+        with open(Path(raw_considering_results_filename).parent / f"{MetricTrackerStabilityWholeBitmap.METRIC_NAME}.json", "w") as json_file:
             json_file.write(json.dumps(results.to_dict(), indent=4))
 
-        filename = str(Path(raw_considering_results_filename).parent / f"{MetricTrackerStability.METRIC_NAME}_true_false_positive_negative.png")
+        filename = str(Path(raw_considering_results_filename).parent / f"{MetricTrackerStabilityWholeBitmap.METRIC_NAME}_true_false_positive_negative.png")
         results.plot(filename)
-        print(f"Result for metric {MetricTrackerStability.METRIC_NAME} of comparing {raw_considering_results_filename} to {raw_state_of_art_results_filename} is saved to {filename}")
+        print(f"Result for metric true_false_positive_negative {MetricTrackerStabilityWholeBitmap.METRIC_NAME} of comparing {raw_considering_results_filename} to {raw_state_of_art_results_filename} is saved to {filename}")
 
 
 if __name__ == "__main__":
-    MetricTrackerStability().count("/home/kir/hawk-eye/HawkEyeExperiments/temp/a/1/raw.json",
+    MetricTrackerStabilityWholeBitmap().count("/home/kir/hawk-eye/HawkEyeExperiments/temp/a/1/raw.json",
                                    "/home/kir/hawk-eye/HawkEyeExperiments/temp/b/1/raw.json")
