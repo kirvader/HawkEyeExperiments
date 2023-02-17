@@ -11,6 +11,8 @@ from experiments.run_single_hypothesis import run_solution
 from experiments.state_of_art_tracker.state_of_art_tracker import StateOfArtDetector
 from experiments.yolov7_only_detection_tracker.yolov7_only_detection_tracker import YOLOv7OnlyDetectionTracker
 from experiments.yolov7_manual_tracker.yolov7_manual_tracker import YOLOv7ManualTracker
+from experiments.yolov7_manual_tracker.yolov7_manual_tracker_no_speed_control import \
+    YOLOv7ManualTrackerNoSpeedControl
 
 
 def parse_args():
@@ -43,6 +45,8 @@ def get_tracker_by_name(tracker_name: str):
         return YOLOv7OnlyDetectionTracker()
     elif tracker_name == 'manual_tracking_with_yolov7':
         return YOLOv7ManualTracker()
+    elif tracker_name == 'manual_tracking_with_yolov7_no_speed_control':
+        return YOLOv7ManualTrackerNoSpeedControl()
     else:
         raise Exception("Provided tracker doesn't exist!")
 
