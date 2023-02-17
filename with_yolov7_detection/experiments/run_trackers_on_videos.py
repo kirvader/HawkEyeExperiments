@@ -3,6 +3,8 @@ from pathlib import Path
 
 import sys
 
+from with_yolov7_detection.experiments.yolov7_manual_tracker.yolov7_manual_tracker import YOLOv7ManualTracker
+
 project_root = Path(__file__).parent.parent
 
 sys.path.append(str(project_root))
@@ -40,6 +42,8 @@ def get_tracker_by_name(tracker_name: str):
         return StateOfArtDetector()
     elif tracker_name == 'pure_yolov7_detector':
         return YOLOv7OnlyDetectionTracker()
+    elif tracker_name == 'manual_tracking_with_yolov7':
+        return YOLOv7ManualTracker()
     else:
         raise Exception("Provided tracker doesn't exist!")
 
