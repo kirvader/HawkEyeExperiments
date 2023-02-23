@@ -7,14 +7,14 @@ from numpy import random
 
 project_root = Path(__file__).parent.parent.parent
 
-sys.path.append(project_root.__str__())
+sys.path.append(str(project_root))
 
-from experiments.inference_utils.detection_result import DetectionResult
 from models.experimental import attempt_load
 from utils.datasets import letterbox
 from utils.general import check_img_size, non_max_suppression, \
     scale_coords, xyxy2xywh, set_logging, increment_path
 from utils.torch_utils import select_device, time_synchronized, TracedModel
+from experiments.inference_utils.detection_result import DetectionResult
 
 
 class Args:

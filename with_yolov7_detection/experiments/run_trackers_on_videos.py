@@ -70,6 +70,5 @@ if __name__ == "__main__":
 
             run_solution(detector,
                          current_video_path,
-                         result_video_output_filename,
                          result_raw_output_filename,
                          args.debug_mode)

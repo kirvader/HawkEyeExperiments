@@ -10,26 +10,7 @@ from experiments.inference_utils.detection_result import Box, DetectionResult, t
 from experiments.inference_utils.single_frame_yolov7_detector import YOLOv7SingleDetectionRunner, Args
 from experiments.run_single_hypothesis import run_solution
 from experiments.tracker_base import SingleObjectTrackerBase
-
-
-def get_cropped_image(frame, part_to_keep: Box):
-    top = max(0, int(frame.shape[0] * (part_to_keep.y - part_to_keep.h / 2)))
-    left = max(0, int(frame.shape[1] * (part_to_keep.x - part_to_keep.w / 2)))
-    bottom = min(frame.shape[0] - 1, int(frame.shape[0] * (part_to_keep.y + part_to_keep.h / 2)))
-    right = min(frame.shape[1] - 1, int(frame.shape[1] * (part_to_keep.x + part_to_keep.w / 2)))
-
-    if bottom - top < 32:
-        if top + 32 < frame.shape[0]:
-            bottom = top + 32
-        else:
-            top = bottom - 32
-    if right - left < 32:
-        if left + 32 < frame.shape[0]:
-            right = left + 32
-        else:
-            left = right - 32
-
-    return frame[top:bottom, left:right].copy()
+from experiments.yolov7_manual_tracker.manual_trackers_utils import get_cropped_image
 
 
 class YOLOv7ManualTrackerNoSpeedControl(SingleObjectTrackerBase):
@@ -38,7 +19,7 @@ class YOLOv7ManualTrackerNoSpeedControl(SingleObjectTrackerBase):
         self.last_good_result = Box(0.5, 0.5, 1.0, 1.0)
 
         self.prediction_area_size_velocity = (1.0, 1.0)
-        self.max_delta_time = 1000
+        self.max_delta_time = 600
 
         self.next_inference_timestamp = 0
         self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls], img_size=512)), 350, 0.8),
@@ -109,4 +90,4 @@ class YOLOv7ManualTrackerNoSpeedControl(SingleObjectTrackerBase):
 
 if __name__ == "__main__":
     tracker = YOLOv7ManualTrackerNoSpeedControl()
-    run_solution(tracker, "inference/1.mp4", "inference/1_output.mp4", "inference/1_raw.json")
+    run_solution(tracker, "inference/1.mp4", "inference/1_raw.json")

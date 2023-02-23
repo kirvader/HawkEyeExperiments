@@ -5,10 +5,11 @@ project_root = Path(__file__).parent.parent.parent
 
 sys.path.append(str(project_root))
 
-from experiments.inference_utils.detection_result import Box, DetectionResult
 from experiments.inference_utils.single_frame_yolov7_detector import YOLOv7SingleDetectionRunner, Args
 from experiments.run_single_hypothesis import run_solution
 from experiments.tracker_base import SingleObjectTrackerBase
+from experiments.inference_utils.detection_result import Box, DetectionResult
+from experiments.inference_utils.frame_processing_info import FrameProcessingInfo
 
 
 class StateOfArtDetector(SingleObjectTrackerBase):
@@ -33,4 +34,4 @@ class StateOfArtDetector(SingleObjectTrackerBase):
 
 if __name__ == "__main__":
     tracker = StateOfArtDetector()
-    run_solution(tracker, "inference/1.mp4", "inference/1_output.mp4", "inference/1_raw.json")
+    run_solution(tracker, "inference/1.mp4", "inference/1_raw.json")
