@@ -6,7 +6,7 @@ import cv2
 from experiments.inference_utils.frame_processing_info import FrameProcessingInfo
 from experiments.tracker_base import SingleObjectTrackerBase
 
-from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm
 
 def run_solution(tracker_impl: SingleObjectTrackerBase,
                  video_input_source: str,
@@ -26,7 +26,7 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
     current_index = 0
     current_time = 0
     is_first_detection = True
-    with tqdm(range(1, length), desc=f"{tracker_impl.__class__.__name__}", leave=True) as tqdm_bar:
+    with tqdm(range(1, length), desc=f"{tracker_impl.__class__.__name__}", position=0, leave=True) as tqdm_bar:
         for _ in tqdm_bar:
             if tracker_impl.is_available(current_time):
                 prediction_area = tracker_impl.get_prediction_area(current_time)
