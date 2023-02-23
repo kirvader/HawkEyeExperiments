@@ -32,6 +32,8 @@ def parse_args():
         List of tracker names:
         - state_of_art_detector = YOLOv7 detection applied to each frame. Main trick here that this 
         - pure_yolov7_detector = YOLOv7 simple detection with "real" latency.
+        - manual_tracking_with_yolov7 = Manual tracking including object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame according to object speed.
+        - manual_tracking_with_yolov7 = Manual tracking without object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame.
     """)
     parser.add_argument('--debug_mode', action='store_true', help="If turned on then it will show current video output")
 
