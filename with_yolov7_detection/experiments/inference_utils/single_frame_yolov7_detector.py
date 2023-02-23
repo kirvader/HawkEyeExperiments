@@ -148,7 +148,7 @@ class YOLOv7SingleDetectionRunner:
                 xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                 result.append(DetectionResult(xywh[0], xywh[1], xywh[2], xywh[3], cls, conf))
 
-        print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
+        # print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
         return result
 
 

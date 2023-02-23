@@ -5,6 +5,7 @@ import cv2
 
 from experiments.inference_utils.frame_processing_info import FrameProcessingInfo
 from experiments.tracker_base import SingleObjectTrackerBase
+from tqdm import tqdm
 
 
 def run_solution(tracker_impl: SingleObjectTrackerBase,
@@ -25,25 +26,31 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
     current_index = 0
     current_time = 0
     is_first_detection = True
-    while status:
-        if tracker_impl.is_available(current_time):
-            prediction_area = tracker_impl.get_prediction_area(current_time)
+    with tqdm(range(1, length), desc=f"{tracker_impl.__class__.__name__}", leave=True) as tqdm_bar:
+        for _ in tqdm_bar:
+            if tracker_impl.is_available(current_time):
+                prediction_area = tracker_impl.get_prediction_area(current_time)
 
-            print(f"({current_index}/{length})", end="")
-            last_detection = tracker_impl.process_frame(frame, current_time)
+                last_detection = tracker_impl.process_frame(frame, current_time)
 
-            if is_first_detection:
-                is_first_detection = False
-            else:
-                raw_results_file.write(',\n')
-            raw_results_file.write(
-                json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection).to_dict(), indent=4))
+                if last_detection is None:
+                    tqdm_bar.set_postfix_str(f"{current_index} - None")
+                else:
+                    tqdm_bar.set_postfix_str(f"{current_index} - Found")
+                tqdm_bar.refresh()
 
-        if debug_mode:
-            cv2.imshow("result", frame)
-        status, frame = in_cap.read()
-        current_index += 1
-        current_time += 1000 / fps  # ms_in_second / fps
+                if is_first_detection:
+                    is_first_detection = False
+                else:
+                    raw_results_file.write(',\n')
+                raw_results_file.write(
+                    json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection).to_dict(), indent=4))
+
+            if debug_mode:
+                cv2.imshow("result", frame)
+            status, frame = in_cap.read()
+            current_index += 1
+            current_time += 1000 / fps  # ms_in_second / fps
 
     in_cap.release()
     raw_results_file.write("]")

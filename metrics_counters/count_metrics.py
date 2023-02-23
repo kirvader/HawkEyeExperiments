@@ -22,9 +22,17 @@ def parse_args():
     """)
     parser.add_argument('--tracker_names', nargs='+', help="""
         Trackers which we will try to rate with state of art solution.
+        - state_of_art_detector = YOLOv7 detection applied to each frame. Main trick here that this 
+        - pure_yolov7_detector = YOLOv7 simple detection with "real" latency.
+        - manual_tracking_with_yolov7 = Manual tracking including object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame according to object speed.
+        - manual_tracking_with_yolov7 = Manual tracking without object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame.
+   
     """)
     parser.add_argument('--metrics', nargs='+', default=[], help="""
         Metric names with which we will try to rate our solution.
+        - detections_percentage = YOLOv7 detection applied to each frame. Main trick here that this 
+        - tracker_stability_whole_bitmap = YOLOv7 simple detection with "real" latency.
+        - tracker_stability_object_in_scope = Manual tracking including object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame according to object speed.   
     """)
     parser.add_argument('--max_columns', type=int, default=4, help="""
         When printing all charts on one, max_columns will be used here

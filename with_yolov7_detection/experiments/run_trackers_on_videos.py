@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
+from tqdm import tqdm as tqdm
+# from tqdm import tqdm_notebook as tqdm
 
 import sys
 
@@ -58,19 +60,22 @@ if __name__ == "__main__":
 
     results_directory = Path(args.results_directory)
     stored_videos_directory = Path(args.videos_containing_folder)
-    for tracker_name in args.trackers:
-        current_tracker_results_folder = results_directory / tracker_name
-        current_tracker_results_folder.mkdir(parents=True, exist_ok=True)
-        for video_name in args.video_names:
-            print(tracker_name, " ", video_name)
-            current_video_path = str(stored_videos_directory / f"{video_name}.mp4")
-            current_results_folder = current_tracker_results_folder / video_name
-            current_results_folder.mkdir(parents=True, exist_ok=True)
-            result_video_output_filename = str(current_results_folder / "visualization.mp4")
-            result_raw_output_filename = str(current_results_folder / "raw.json")
-            detector = get_tracker_by_name(tracker_name)
+    with tqdm(args.trackers) as tracker_pbar:
+        for tracker_name in tracker_pbar:
+            tracker_pbar.set_description(f"Tracker {tracker_name}")
+            current_tracker_results_folder = results_directory / tracker_name
+            current_tracker_results_folder.mkdir(parents=True, exist_ok=True)
+            with tqdm(args.video_names) as videos_for_tracker_pbar:
+                for video_name in videos_for_tracker_pbar:
+                    videos_for_tracker_pbar.set_description(f"Video {video_name}")
+                    current_video_path = str(stored_videos_directory / f"{video_name}.mp4")
+                    current_results_folder = current_tracker_results_folder / video_name
+                    current_results_folder.mkdir(parents=True, exist_ok=True)
+                    result_video_output_filename = str(current_results_folder / "visualization.mp4")
+                    result_raw_output_filename = str(current_results_folder / "raw.json")
+                    detector = get_tracker_by_name(tracker_name)
 
-            run_solution(detector,
-                         current_video_path,
-                         result_raw_output_filename,
-                         args.debug_mode)
+                    run_solution(detector,
+                                 current_video_path,
+                                 result_raw_output_filename,
+                                 args.debug_mode)
