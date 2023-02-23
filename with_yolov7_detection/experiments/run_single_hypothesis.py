@@ -5,8 +5,8 @@ import cv2
 
 from experiments.inference_utils.frame_processing_info import FrameProcessingInfo
 from experiments.tracker_base import SingleObjectTrackerBase
-from tqdm import tqdm
 
+from tqdm import tqdm_notebook as tqdm
 
 def run_solution(tracker_impl: SingleObjectTrackerBase,
                  video_input_source: str,

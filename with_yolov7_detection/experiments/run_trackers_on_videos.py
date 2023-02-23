@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from tqdm import tqdm as tqdm
-# from tqdm import tqdm_notebook as tqdm
+# from tqdm import tqdm as tqdm
+from tqdm import tqdm_notebook as tqdm
 
 import sys
 
