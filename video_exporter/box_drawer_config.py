@@ -1,6 +1,3 @@
-fps = 30
-
-
 # Constants
 SECOND = 1000
 

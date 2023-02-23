@@ -25,4 +25,4 @@ class FrameProcessingInfo:
             return FrameProcessingInfo(int(data["frame_index"]),
                                        Box.from_dict(data["prediction_area"]),
                                        Box.from_dict(data["detection_box"]))
-        return FrameProcessingInfo(int(data["frame_index"]), Box.from_dict(data["prediction_area"]), Box(0, 0, 0, 0))
+        return FrameProcessingInfo(int(data["frame_index"]), Box.from_dict(data["prediction_area"]), None)

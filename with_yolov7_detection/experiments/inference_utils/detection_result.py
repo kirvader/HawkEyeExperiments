@@ -35,6 +35,20 @@ class Box:
                              color,
                              thickness)
 
+    def is_close_to(self, other, eps: float):
+        return abs(self.x - other.x) < eps and abs(self.y - other.y) < eps
+
+    def square_of_intersection(self, other):
+        left = max(self.x - self.w / 2, other.x - other.w / 2)
+        top = max(self.y - self.h / 2, other.y - other.h / 2)
+        right = min(self.x + self.w / 2, other.x + other.w / 2)
+        bottom = max(self.y + self.h / 2, other.y + other.h / 2)
+
+        return max(0.0, (bottom - top) * (right - left))
+
+    def square_of_union(self, other):
+        return self.w * self.h + other.w * other.h - self.square_of_intersection(other)
+
 
 def transform_to_absolute_from_relative(relative_box, box_container: Box):
     relative_box.x = box_container.x - box_container.w / 2 + box_container.w * relative_box.x

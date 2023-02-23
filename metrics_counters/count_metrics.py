@@ -4,6 +4,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
+from metrics_counters.metric_tracker_stability.metric_tracker_stability_whole_bitmap import MetricTrackerStabilityWholeBitmap
+from metrics_counters.metric_tracker_stability.metric_tracker_stability_object_in_scope_time import MetricTrackerStabilityObjectInScopeTime
 from metrics_counters.metric_good_detections.metric_good_detections import MetricGoodDetections
 
 
@@ -24,12 +26,19 @@ def parse_args():
     parser.add_argument('--metrics', nargs='+', default=[], help="""
         Metric names with which we will try to rate our solution.
     """)
+    parser.add_argument('--max_columns', type=int, default=4, help="""
+        When printing all charts on one, max_columns will be used here
+    """)
 
     return parser.parse_args()
 
 def get_metrics_counter_by_name(metric_name: str):
     if metric_name == "detections_percentage":
         return MetricGoodDetections()
+    if metric_name == "tracker_stability_whole_bitmap":
+        return MetricTrackerStabilityWholeBitmap()
+    if metric_name == "tracker_stability_object_in_scope":
+        return MetricTrackerStabilityObjectInScopeTime()
 
 if __name__ == "__main__":
     args = parse_args()
@@ -47,4 +56,4 @@ if __name__ == "__main__":
                 metric_counter.count(str(current_tracker_results_for_video), str(state_of_art_tracker_results_for_video))
 
         metric_counter = get_metrics_counter_by_name(metric_name)
-        metric_counter.plot_all_on_one(args.results_path, args.tracker_names, args.videos)
+        metric_counter.plot_all_on_one(args.results_path, args.tracker_names, args.videos, args.max_columns)

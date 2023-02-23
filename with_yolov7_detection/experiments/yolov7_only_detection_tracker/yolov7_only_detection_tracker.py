@@ -35,4 +35,4 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
 
 if __name__ == "__main__":
     tracker = YOLOv7OnlyDetectionTracker()
-    run_solution(tracker, "inference/1.mp4", "inference/1_output.mp4", "inference/1_raw.json")
+    run_solution(tracker, "inference/1.mp4", "inference/1_raw.json")

@@ -91,8 +91,6 @@ class DetectionResults:
     def plot(self, filename):
         figure = plt.figure(figsize=(25, 25))
         figure.add_subplot(2, 1, 2)
-        print(self.detections_run)
-        print(self.frames_quantity - self.detections_run)
         plot_single_horizontal_chart([""], self.detections_run, self.frames_quantity - self.detections_run)
 
         figure.add_subplot(2, 1, 1)
@@ -111,19 +109,17 @@ class DetectionResults:
 class MetricGoodDetections(MetricCounterBase):
     METRIC_NAME = "METRIC_DETECTIONS_PERCENTAGE"
 
-    def plot_all_on_one(self, results_folder, tracker_names, video_names):
+    def plot_all_on_one(self, results_folder, tracker_names, video_names, max_columns=-1):
         columns = len(video_names)
-        rows = 2 * len(tracker_names)
+        if max_columns != -1:
+            columns = min(max_columns, len(video_names))
+        rows = (len(video_names) + columns - 1) // columns
+        rows *= 2 * len(tracker_names)
+        result_figure = plt.figure(figsize=(40, 40))
 
         for tracker_index in range(len(tracker_names)):
             path = Path(results_folder) / tracker_names[tracker_index]
-            overall_results = DetectionResults()
-            result_figure = plt.figure(figsize=(25, 25))
             for video_index in range(len(video_names)):
-                with open(path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}.json") as f:
-                    lol = json.load(f)
-                    overall_results.take_into_account(DetectionResults.from_dict(lol))
-                    print(overall_results.to_dict())
 
                 index_in_grid = tracker_index * 2 * columns + video_index + 1
                 filename = path / video_names[
@@ -137,9 +133,23 @@ class MetricGoodDetections(MetricCounterBase):
                 img = mpimg.imread(str(filename))
                 result_figure.add_subplot(rows, columns, index_in_grid)
                 plt.imshow(img)
-            plt.savefig(str(Path(results_folder) / tracker_names[tracker_index] / f"{MetricGoodDetections.METRIC_NAME}_all_charts_on_one.pdf"))
-            plt.close()
-            overall_results.plot(str(Path(results_folder) / tracker_names[tracker_index] / f"{MetricGoodDetections.METRIC_NAME}_all_in_one.pdf"))
+
+        filename = str(Path(results_folder) / f"{MetricGoodDetections.METRIC_NAME}_all_charts_on_one.pdf")
+        plt.savefig(filename)
+        plt.close()
+        trackers_string = ", ".join(tracker_names)
+        print(f"All separated charts for metric {MetricGoodDetections.METRIC_NAME} of trackers [ { trackers_string } ] are saved to {filename}.")
+
+        for tracker_index in range(len(tracker_names)):
+            path = Path(results_folder) / tracker_names[tracker_index]
+            overall_results = DetectionResults()
+            for video_index in range(len(video_names)):
+                with open(path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}.json") as f:
+                    lol = json.load(f)
+                    overall_results.take_into_account(DetectionResults.from_dict(lol))
+            filename = str(Path(results_folder) / tracker_names[tracker_index] / f"{MetricGoodDetections.METRIC_NAME}_all_in_one.pdf")
+            overall_results.plot(filename)
+            print(f"Overall results for metric {MetricGoodDetections.METRIC_NAME} of tracker {tracker_names[tracker_index]} are saved to {filename}.")
 
     def count(self, raw_considering_results_filename: str, raw_state_of_art_results_filename: str):
         considering_results_file = open(raw_considering_results_filename)
@@ -177,14 +187,17 @@ class MetricGoodDetections(MetricCounterBase):
                 indent=4))
 
         plot_single_horizontal_chart([""], len(considering_data), frames_quantity - len(considering_data))
-        plt.savefig(str(Path(
-            raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_efficiency.png"))
+        filename = str(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_efficiency.png")
+        plt.savefig(filename)
         plt.close()
+        print(f"Result for efficiency metric {MetricGoodDetections.METRIC_NAME} of comparing {raw_considering_results_filename} to {raw_state_of_art_results_filename} is saved to {filename}.")
+
 
         detections_counter.plot()
-        plt.savefig(str(Path(
-            raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_true_false_positive_negative.png"))
+        filename = str(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_true_false_positive_negative.png")
+        plt.savefig(filename)
         plt.close()
+        print(f"Result for whole metric {MetricGoodDetections.METRIC_NAME} of comparing {raw_considering_results_filename} to {raw_state_of_art_results_filename} is saved to {filename}.")
 
 
 if __name__ == "__main__":

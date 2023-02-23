@@ -10,6 +10,9 @@ sys.path.append(str(project_root))
 from experiments.run_single_hypothesis import run_solution
 from experiments.state_of_art_tracker.state_of_art_tracker import StateOfArtDetector
 from experiments.yolov7_only_detection_tracker.yolov7_only_detection_tracker import YOLOv7OnlyDetectionTracker
+from experiments.yolov7_manual_tracker.yolov7_manual_tracker import YOLOv7ManualTracker
+from experiments.yolov7_manual_tracker.yolov7_manual_tracker_no_speed_control import \
+    YOLOv7ManualTrackerNoSpeedControl
 
 
 def parse_args():
@@ -29,6 +32,8 @@ def parse_args():
         List of tracker names:
         - state_of_art_detector = YOLOv7 detection applied to each frame. Main trick here that this 
         - pure_yolov7_detector = YOLOv7 simple detection with "real" latency.
+        - manual_tracking_with_yolov7 = Manual tracking including object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame according to object speed.
+        - manual_tracking_with_yolov7 = Manual tracking without object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame.
     """)
     parser.add_argument('--debug_mode', action='store_true', help="If turned on then it will show current video output")
 
@@ -40,6 +45,10 @@ def get_tracker_by_name(tracker_name: str):
         return StateOfArtDetector()
     elif tracker_name == 'pure_yolov7_detector':
         return YOLOv7OnlyDetectionTracker()
+    elif tracker_name == 'manual_tracking_with_yolov7':
+        return YOLOv7ManualTracker()
+    elif tracker_name == 'manual_tracking_with_yolov7_no_speed_control':
+        return YOLOv7ManualTrackerNoSpeedControl()
     else:
         raise Exception("Provided tracker doesn't exist!")
 
@@ -63,6 +72,5 @@ if __name__ == "__main__":
 
             run_solution(detector,
                          current_video_path,
-                         result_video_output_filename,
                          result_raw_output_filename,
                          args.debug_mode)
