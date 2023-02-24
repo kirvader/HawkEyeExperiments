@@ -7,7 +7,6 @@ import cv2
 from tqdm import tqdm
 
 project_root = Path(__file__).parent.parent
-
 sys.path.append(str(project_root))
 
 from video_exporter.box_drawer_config import PREDICTION_AREA_LINE_COLOR, \
