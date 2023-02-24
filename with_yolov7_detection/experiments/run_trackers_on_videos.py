@@ -43,9 +43,7 @@ def parse_args():
 
 
 def get_tracker_by_name(tracker_name: str):
-    if tracker_name == 'state_of_art_detector':
-        return StateOfArtDetector()
-    elif tracker_name == 'pure_yolov7_detector':
+    if tracker_name == 'pure_yolov7_detector':
         return YOLOv7OnlyDetectionTracker()
     elif tracker_name == 'manual_tracking_with_yolov7':
         return YOLOv7ManualTracker()

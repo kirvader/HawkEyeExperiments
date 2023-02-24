@@ -15,7 +15,7 @@ from experiments.tracker_base import SingleObjectTrackerBase
 class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
     def __init__(self, inference_time: int = 350, tracking_cls: int = 32):
         self.last_inference_start_time = 0
-        self.detector = YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls]))
+        self.detector = None  # setup is required
         self.detector_inference_time = inference_time
         self.tracking_cls = tracking_cls
         self.weights = "yolov7.pt"
