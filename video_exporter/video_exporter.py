@@ -42,7 +42,12 @@ def export_processed_video(raw_video_path: str,
     width = int(in_cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float `width`
     height = int(in_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
     fps = int(in_cap.get(cv2.CAP_PROP_FPS))
-    out_cap = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc(*"DIVX"), fps, (2 * width, 2 * height))
+    if len(raw_results_path_and_name) < 4:
+        out_cap = (len(raw_results_path_and_name) * width, height)
+    else:
+        out_cap = (2 * width, 2 * height)
+
+    out_cap = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc(*"DIVX"), fps, out_cap)
 
     status, frame = in_cap.read()
     tracker_names = []
