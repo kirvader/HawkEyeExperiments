@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -13,10 +14,24 @@ from experiments.inference_utils.frame_processing_info import FrameProcessingInf
 
 
 class StateOfArtDetector(SingleObjectTrackerBase):
-    def __init__(self, inference_time: int = 350, tracking_cls: int = 32):
+    def __init__(self, tracking_cls: int = 32):
         self.detector = YOLOv7SingleDetectionRunner(Args(weights="yolov7-e6e.pt", classes=[tracking_cls]))
-        self.detector_inference_time = inference_time
         self.tracking_cls = tracking_cls
+        self.weights = "yolov7-e6e.pt"
+
+    def setup(self, filename: str):
+        with open(filename, "r") as f:
+            json_object = json.load(f)
+        self.tracking_cls = json_object["tracking_cls"]
+        self.weights = json_object["weights"]
+        self.detector = YOLOv7SingleDetectionRunner(Args(weights=self.weights, classes=[self.tracking_cls]))
+
+    def export_config(self, filename: str):
+        with open(filename, "w") as f:
+            f.write(json.dumps({
+                "tracking_cls": self.tracking_cls,
+                "weights": self.weights
+            }, indent=4))
 
     def is_available(self, timestamp: int) -> bool:
         return True

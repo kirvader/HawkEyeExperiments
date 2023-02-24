@@ -2,6 +2,12 @@ from experiments.inference_utils.detection_result import Box
 
 
 class SingleObjectTrackerBase:
+    def setup(self, filename: str):
+        pass
+
+    def export_config(self, filename: str):
+        pass
+
     def is_available(self, timestamp: int) -> bool:
         pass
 

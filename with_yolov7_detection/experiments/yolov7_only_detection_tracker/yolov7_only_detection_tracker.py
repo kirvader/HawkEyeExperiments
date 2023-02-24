@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -17,6 +18,24 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
         self.detector = YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls]))
         self.detector_inference_time = inference_time
         self.tracking_cls = tracking_cls
+        self.weights = "yolov7.pt"
+
+    def setup(self, filename: str):
+        with open(filename, "r") as f:
+            json_object = json.load(f)
+        self.tracking_cls = json_object["tracking_cls"]
+        self.detector_inference_time = json_object["detector_inference_time"]
+        self.weights = json_object["weights"]
+
+        self.detector = YOLOv7SingleDetectionRunner(Args(classes=[self.tracking_cls], weights=self.weights))
+
+    def export_config(self, filename: str):
+        with open(filename, "w") as f:
+            f.write(json.dumps({
+                "tracking_cls": self.tracking_cls,
+                "detector_inference_time": self.detector_inference_time,
+                "weights": self.weights
+            }, indent=4))
 
     def is_available(self, timestamp: int) -> bool:
         return timestamp - self.last_inference_start_time >= self.detector_inference_time
@@ -35,4 +54,5 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
 
 if __name__ == "__main__":
     tracker = YOLOv7OnlyDetectionTracker()
-    run_solution(tracker, "inference/1.mp4", "inference/1_raw.json")
+    tracker.export_config("inference/configs/pure_yolov7_detector/default.json")
+    # run_solution(tracker, "inference/1.mp4", "inference/1_raw.json")
