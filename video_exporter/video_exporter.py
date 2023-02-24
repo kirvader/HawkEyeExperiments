@@ -1,11 +1,16 @@
 import json
+import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
 import cv2
 from tqdm import tqdm
 
-from box_drawer_config import PREDICTION_AREA_LINE_COLOR, \
+project_root = Path(__file__).parent.parent
+
+sys.path.append(str(project_root))
+
+from video_exporter.box_drawer_config import PREDICTION_AREA_LINE_COLOR, \
     PREDICTION_AREA_LINE_THICKNESS, \
     LAST_DETECTION_LINE_COLOR, \
     LAST_DETECTION_LINE_THICKNESS
