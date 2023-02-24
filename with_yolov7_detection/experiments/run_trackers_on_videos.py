@@ -10,7 +10,6 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from experiments.run_single_hypothesis import run_solution
-from experiments.state_of_art_tracker.state_of_art_tracker import StateOfArtDetector
 from experiments.yolov7_only_detection_tracker.yolov7_only_detection_tracker import YOLOv7OnlyDetectionTracker
 from experiments.yolov7_manual_tracker.yolov7_manual_tracker import YOLOv7ManualTracker
 

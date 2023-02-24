@@ -31,8 +31,9 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
                                  (128, 180, 0.05),
                                  (64, 120, 0.0125),
                                  (32, 80, 0.0)]
-        self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls], img_size=img_sz)), inference_time,
-                           bound_for_applying) for img_sz, inference_time, bound_for_applying in self.detectors_config]
+        self.detectors = None
+        # self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls], img_size=img_sz)), inference_time,
+        #                    bound_for_applying) for img_sz, inference_time, bound_for_applying in self.detectors_config]
         self.tracking_cls = tracking_cls
 
     def setup(self, filename: str):
@@ -42,6 +43,8 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
         self.deceleration_coef = json_object["deceleration_coef"]
         self.tracking_cls = json_object["tracking_cls"]
         self.detectors_config = [(detector_config_item["img_sz"], detector_config_item["inference_time"], detector_config_item["bound_for_applying"]) for detector_config_item in json_object["detectors"]]
+        self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls], img_size=img_sz)), inference_time,
+                           bound_for_applying) for img_sz, inference_time, bound_for_applying in self.detectors_config]
 
     def export_config(self, filename: str):
         with open(filename, "w") as f:
@@ -113,4 +116,5 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
 
 if __name__ == "__main__":
     tracker = YOLOv7ManualTracker()
+    tracker.export_config("with_speed.json")
     run_solution(tracker, "inference/1.mp4", "inference/1_raw.json")
