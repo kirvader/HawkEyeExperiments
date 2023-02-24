@@ -73,7 +73,7 @@ def export_processed_video(raw_video_path: str,
             if current_results_index[i] != len(raw_results[i]):
                 if current_frame_index == raw_results[i][current_results_index[i]].frame_index:
                     apply_processing_result_to_frame(frame, raw_results[i][current_results_index[i]], width, height)
-                    current_results_index += 1
+                    current_results_index[i] += 1
             frame_i = cv2.putText(frame_i, tracker_names[i], (0, 0), cv2.FONT_HERSHEY_SIMPLEX,
                                   1, (255, 255, 255), 2, cv2.LINE_AA)
             current_frame_visualizations.append(frame_i)
