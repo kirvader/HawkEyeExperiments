@@ -43,7 +43,7 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
         self.deceleration_coef = json_object["deceleration_coef"]
         self.tracking_cls = json_object["tracking_cls"]
         self.detectors_config = [(detector_config_item["img_sz"], detector_config_item["inference_time"], detector_config_item["bound_for_applying"]) for detector_config_item in json_object["detectors"]]
-        self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls], img_size=img_sz)), inference_time,
+        self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[self.tracking_cls], img_size=img_sz)), inference_time,
                            bound_for_applying) for img_sz, inference_time, bound_for_applying in self.detectors_config]
 
     def export_config(self, filename: str):
