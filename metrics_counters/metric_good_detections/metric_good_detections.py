@@ -2,6 +2,7 @@ import json
 import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import image as mpimg
 
 project_root = Path(__file__).parent.parent.parent
@@ -89,7 +90,7 @@ class DetectionResults:
         }
 
     def plot(self, filename):
-        figure = plt.figure(figsize=(25, 25))
+        figure = plt.figure(figsize=(10, 10))
         figure.add_subplot(2, 1, 2)
         plot_single_horizontal_chart([""], self.detections_run, self.frames_quantity - self.detections_run)
 
@@ -109,58 +110,105 @@ class DetectionResults:
 class MetricGoodDetections(MetricCounterBase):
     METRIC_NAME = "METRIC_DETECTIONS_PERCENTAGE"
 
-    def plot_all_on_one(self, results_folder, tracker_names, video_names, max_columns=-1):
-        columns = len(video_names)
-        if max_columns != -1:
-            columns = min(max_columns, len(video_names))
-        rows = (len(video_names) + columns - 1) // columns
-        rows *= 2 * len(tracker_names)
-        result_figure = plt.figure(figsize=(40, 40))
+    def compare_trackers_on_single_video(self,
+                                         metrics_output_directory: str,
+                                         tracker_names_with_configs: list,
+                                         state_of_art_tracker_with_config: str,
+                                         video_name: str):
+        current_comparison_output_directory = MetricCounterBase.get_output_folder_for_many_trackers_single_video(
+            state_of_art_tracker_with_config,
+            tracker_names_with_configs,
+            video_name,
+            metrics_output_directory,
+            MetricGoodDetections.METRIC_NAME
+        )
 
-        for tracker_index in range(len(tracker_names)):
-            path = Path(results_folder) / tracker_names[tracker_index]
-            for video_index in range(len(video_names)):
+        results = {}
+        for tracker_name_with_config in tracker_names_with_configs:
+            current_tracker_metric_raw_results_file = MetricCounterBase.get_output_folder_for_single_tracker_single_video(
+                state_of_art_tracker_with_config,
+                tracker_name_with_config,
+                video_name,
+                metrics_output_directory,
+                MetricGoodDetections.METRIC_NAME
+            ) / "raw.json"
+            with open(current_tracker_metric_raw_results_file) as f:
+                json_object = json.load(f)
+            results[tracker_name_with_config] = DetectionResults.from_dict(json_object)
 
-                index_in_grid = tracker_index * 2 * columns + video_index + 1
-                filename = path / video_names[
-                    video_index] / f"{MetricGoodDetections.METRIC_NAME}_true_false_positive_negative.png"
-                img = mpimg.imread(str(filename))
-                result_figure.add_subplot(rows, columns, index_in_grid)
-                plt.imshow(img)
+        def get_detections_accuracy_list(detection_results: DetectionResults) -> list:
+            return [detection_results.positive_true, detection_results.positive_false, detection_results.negative_true,
+                    detection_results.negative_false]
 
-                index_in_grid = tracker_index * 2 * columns + columns + video_index + 1
-                filename = path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}_efficiency.png"
-                img = mpimg.imread(str(filename))
-                result_figure.add_subplot(rows, columns, index_in_grid)
-                plt.imshow(img)
+        fig = plt.figure(figsize=(6, 5), dpi=200)
+        left, bottom, width, height = 0.1, 0.3, 0.8, 0.6
+        ax = fig.add_axes([left, bottom, width, height])
 
-        filename = str(Path(results_folder) / f"{MetricGoodDetections.METRIC_NAME}_all_charts_on_one.pdf")
-        plt.savefig(filename)
-        plt.close()
-        trackers_string = ", ".join(tracker_names)
-        print(f"All separated charts for metric {MetricGoodDetections.METRIC_NAME} of trackers [ { trackers_string } ] are saved to {filename}.")
+        width = 1 / (len(results) + 1)
+        ticks = np.arange(4)
+        index = -(len(results) / 2 - 1)
 
-        for tracker_index in range(len(tracker_names)):
-            path = Path(results_folder) / tracker_names[tracker_index]
-            overall_results = DetectionResults()
-            for video_index in range(len(video_names)):
-                with open(path / video_names[video_index] / f"{MetricGoodDetections.METRIC_NAME}.json") as f:
-                    lol = json.load(f)
-                    overall_results.take_into_account(DetectionResults.from_dict(lol))
-            filename = str(Path(results_folder) / tracker_names[tracker_index] / f"{MetricGoodDetections.METRIC_NAME}_all_in_one.pdf")
-            overall_results.plot(filename)
-            print(f"Overall results for metric {MetricGoodDetections.METRIC_NAME} of tracker {tracker_names[tracker_index]} are saved to {filename}.")
+        for tracker_name_with_config in results:
+            ax.bar(ticks + index * width, get_detections_accuracy_list(results[tracker_name_with_config]), width,
+                   label=tracker_name_with_config)
+            index += 1
 
-    def count(self, raw_considering_results_filename: str, raw_state_of_art_results_filename: str):
-        considering_results_file = open(raw_considering_results_filename)
-        considering_data = list(
-            map(lambda item: FrameProcessingInfo.from_dict(item), json.load(considering_results_file)))
-        considering_results_file.close()
+        ax.set_ylabel('Quantity of detections')
+        ax.set_title('Detections accuracy')
+        ax.set_xticks(ticks + width / 2)
+        ax.set_xticklabels(["Positive true", "Positive false", "Negative true", "Negative false"])
 
-        state_of_art_results_file = open(raw_state_of_art_results_filename)
-        state_of_art_data = list(
-            map(lambda item: FrameProcessingInfo.from_dict(item), json.load(state_of_art_results_file)))
-        state_of_art_results_file.close()
+        ax.legend(loc='best')
+        plt.savefig(str(current_comparison_output_directory / "accuracy.png"))
+
+    def count_average_across_many_videos(self,
+                                         metrics_raw_results_folder: str,
+                                         tracker_name_with_config: str,
+                                         state_of_art_tracker_with_config: str,
+                                         video_names: list):
+        current_output_folder = MetricCounterBase.get_output_folder_for_single_tracker_many_video(
+            state_of_art_tracker_with_config, tracker_name_with_config, metrics_raw_results_folder,
+            MetricGoodDetections.METRIC_NAME)
+
+        average_results = DetectionResults()
+        for video_name in video_names:
+            current_tracker_metric_raw_results_file = MetricCounterBase.get_output_folder_for_single_tracker_single_video(
+                state_of_art_tracker_with_config,
+                tracker_name_with_config,
+                video_name,
+                metrics_raw_results_folder,
+                MetricGoodDetections.METRIC_NAME
+            ) / "raw.json"
+            with open(current_tracker_metric_raw_results_file) as f:
+                average_results.take_into_account(DetectionResults.from_dict(json.load(f)))
+        video_names_string = ":".join(video_names)
+        average_results.plot(str(current_output_folder / f"average-accuracy-{video_names_string}.png"))
+
+    def count_tracker_performance_on_single_video(self,
+                                                  raw_results_directory: str,
+                                                  state_of_art_tracker_with_config: str,
+                                                  current_tracker_with_config: str,
+                                                  video_name: str,
+                                                  metrics_output_directory: str):
+        current_comparison_output_directory = MetricCounterBase.get_output_folder_for_single_tracker_single_video(
+            state_of_art_tracker_with_config,
+            current_tracker_with_config,
+            video_name,
+            metrics_output_directory,
+            MetricGoodDetections.METRIC_NAME
+        )
+
+        considering_data = MetricCounterBase.read_raw_results(
+            raw_results_directory,
+            current_tracker_with_config,
+            video_name
+        )
+
+        state_of_art_data = MetricCounterBase.read_raw_results(
+            raw_results_directory,
+            state_of_art_tracker_with_config,
+            video_name
+        )
 
         frames_quantity = len(state_of_art_data)
         detections_counter = DetectionCounter()
@@ -178,28 +226,75 @@ class MetricGoodDetections(MetricCounterBase):
                 s1 += 1
                 s2 += 1
 
-        with open(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}.json",
-                  "w") as json_file:
+        with open(current_comparison_output_directory / "raw.json", "w") as json_file:
             json_file.write(json.dumps(
                 DetectionResults(frames_quantity, len(considering_data), detections_counter.detected_right,
                                  detections_counter.detected_wrong, detections_counter.not_detected_right,
-                                 detections_counter.not_detected_wrong, raw_state_of_art_results_filename).to_dict(),
+                                 detections_counter.not_detected_wrong, state_of_art_tracker_with_config).to_dict(),
                 indent=4))
 
         plot_single_horizontal_chart([""], len(considering_data), frames_quantity - len(considering_data))
-        filename = str(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_efficiency.png")
+        filename = str(current_comparison_output_directory / "efficiency.png")
         plt.savefig(filename)
         plt.close()
-        print(f"Result for efficiency metric {MetricGoodDetections.METRIC_NAME} of comparing {raw_considering_results_filename} to {raw_state_of_art_results_filename} is saved to {filename}.")
-
 
         detections_counter.plot()
-        filename = str(Path(raw_considering_results_filename).parent / f"{MetricGoodDetections.METRIC_NAME}_true_false_positive_negative.png")
+        filename = str(current_comparison_output_directory / "accuracy.png")
         plt.savefig(filename)
         plt.close()
-        print(f"Result for whole metric {MetricGoodDetections.METRIC_NAME} of comparing {raw_considering_results_filename} to {raw_state_of_art_results_filename} is saved to {filename}.")
 
 
 if __name__ == "__main__":
-    MetricGoodDetections().count("/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/1_raw.json",
-                                 "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/1_raw.json")
+    MetricGoodDetections().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "pure_yolov7_detector/state_of_art",
+        "pure_yolov7_detector/state_of_art",
+        "1",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricGoodDetections().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "pure_yolov7_detector/state_of_art",
+        "pure_yolov7_detector/default",
+        "1",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricGoodDetections().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "pure_yolov7_detector/state_of_art",
+        "pure_yolov7_detector/default",
+        "2",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricGoodDetections().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "pure_yolov7_detector/state_of_art",
+        "pure_yolov7_detector/default",
+        "3",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricGoodDetections().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "pure_yolov7_detector/state_of_art",
+        "manual_tracking_with_yolov7/no_speed",
+        "1",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricGoodDetections().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "pure_yolov7_detector/state_of_art",
+        "manual_tracking_with_yolov7/with_speed",
+        "1",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricGoodDetections().compare_trackers_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
+        [
+            "pure_yolov7_detector/state_of_art",
+            "pure_yolov7_detector/default",
+            "manual_tracking_with_yolov7/no_speed",
+            "manual_tracking_with_yolov7/with_speed"
+        ],
+        "pure_yolov7_detector/state_of_art",
+        "1"
+    )
+    MetricGoodDetections().count_average_across_many_videos(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
+        "pure_yolov7_detector/default",
+        "pure_yolov7_detector/state_of_art",
+        ["1", "2", "3"]
+    )

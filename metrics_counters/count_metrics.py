@@ -11,22 +11,26 @@ from metrics_counters.metric_good_detections.metric_good_detections import Metri
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('--results_path', type=str, help="""
-        Path to results of inference which we are trying to rate.
+    parser.add_argument('--raw_results_path', type=str, help="""
+        Path to raw results of inference which we are trying to rate.
+    """)
+    parser.add_argument('--metrics_results_path', type=str, help="""
+        Path to where to store the metrics results
     """)
     parser.add_argument('--videos', nargs='+', default=[], help="""
         Videos to rate trackers on.
     """)
-    parser.add_argument('--state_of_art_tracker_name', type=str, help="""
-        Results of good algorithm which we are trying to compare our solution with.
+    parser.add_argument('--state_of_art_tracker_with_config', type=str, help="""
+        Name of tracker with config of the state of art tracker in format "<tracker_name>/<config_name>"
     """)
-    parser.add_argument('--tracker_names', nargs='+', help="""
+    parser.add_argument('--tracker_names_with_config', nargs='+', help="""
         Trackers which we will try to rate with state of art solution.
-        - state_of_art_detector = YOLOv7 detection applied to each frame. Main trick here that this 
-        - pure_yolov7_detector = YOLOv7 simple detection with "real" latency.
+        - pure_yolov7_detector = YOLOv7 simple detection with "real" latency. Configs:
+          * "default" config - the latency of inference is emulated.
+          * "state_of_art" - the best detector without latency.
         - manual_tracking_with_yolov7 = Manual tracking including object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame according to object speed.
-        - manual_tracking_with_yolov7 = Manual tracking without object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame.
-   
+          * no_speed - no dependency of object speed.
+          * with_speed - estimation depends on current speed of the object.
     """)
     parser.add_argument('--metrics', nargs='+', default=[], help="""
         Metric names with which we will try to rate our solution.
@@ -50,18 +54,15 @@ def get_metrics_counter_by_name(metric_name: str):
 
 if __name__ == "__main__":
     args = parse_args()
-    state_of_art_results_path = Path(args.results_path) / args.state_of_art_tracker_name
+    state_of_art_results_path = Path(args.results_path) / args.state_of_art_tracker_with_config
 
     for metric_name in args.metrics:
-        for tracker_name in args.tracker_names:
-            tracker_results_path = Path(args.results_path) / tracker_name
-
-            for video_name in args.videos:
+        for video_name in args.videos:
+            for tracker_with_config in args.trackers_with_configs:
+                tracker_results_path = Path(args.results_path) / tracker_with_config
                 state_of_art_tracker_results_for_video = state_of_art_results_path / video_name / 'raw.json'
                 current_tracker_results_for_video = tracker_results_path / video_name / 'raw.json'
-
                 metric_counter = get_metrics_counter_by_name(metric_name)
                 metric_counter.count(str(current_tracker_results_for_video), str(state_of_art_tracker_results_for_video))
-
         metric_counter = get_metrics_counter_by_name(metric_name)
         metric_counter.plot_all_on_one(args.results_path, args.tracker_names, args.videos, args.max_columns)
