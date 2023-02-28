@@ -2,7 +2,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).parent.parent))
 
