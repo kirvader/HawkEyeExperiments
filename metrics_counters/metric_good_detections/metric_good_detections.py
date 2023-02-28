@@ -167,7 +167,7 @@ class MetricGoodDetections(MetricCounterBase):
                                          state_of_art_tracker_with_config: str,
                                          video_names: list):
         current_output_folder = MetricCounterBase.get_output_folder_for_single_tracker_many_video(
-            state_of_art_tracker_with_config, tracker_name_with_config, metrics_raw_results_folder,
+            state_of_art_tracker_with_config, tracker_name_with_config, video_names, metrics_raw_results_folder,
             MetricGoodDetections.METRIC_NAME)
 
         average_results = DetectionResults()

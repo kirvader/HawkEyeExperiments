@@ -41,10 +41,12 @@ class MetricCounterBase:
     @staticmethod
     def get_output_folder_for_single_tracker_many_video(state_of_art_tracker_with_config: str,
                                                         current_tracker_with_config: str,
+                                                        video_names: list,
                                                         metrics_output_directory: str,
                                                         metric_name: str) -> Path:
+        list_of_comparing_videos = "-".join(map(lambda s: s.replace('/', ':'), video_names))
         current_comparison_output_directory = Path(
-            metrics_output_directory) / "by_tracker" / current_tracker_with_config / f"{metric_name}:{state_of_art_tracker_with_config.replace('/', ':')}/"
+            metrics_output_directory) / "by_tracker" / current_tracker_with_config / f"{metric_name}:{state_of_art_tracker_with_config.replace('/', ':')}" / list_of_comparing_videos
         current_comparison_output_directory.mkdir(parents=True, exist_ok=True)
         return current_comparison_output_directory
 
