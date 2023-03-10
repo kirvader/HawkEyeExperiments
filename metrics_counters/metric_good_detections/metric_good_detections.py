@@ -187,7 +187,7 @@ class MetricGoodDetections(MetricCounterBase):
             ) / "raw.json"
             with open(current_tracker_metric_raw_results_file) as f:
                 average_results.take_into_account(DetectionResults.from_dict(json.load(f)))
-        video_names_string = ":".join(video_names)
+        video_names_string = "-".join(video_names)
         average_results.plot(str(current_output_folder / f"average-accuracy-{video_names_string}.png"))
 
     def count_tracker_performance_on_single_video(self,
