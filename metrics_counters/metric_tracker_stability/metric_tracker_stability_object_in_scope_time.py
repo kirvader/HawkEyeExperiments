@@ -29,15 +29,15 @@ class DetectionType(Enum):
             return DetectionType.NegativeFalse
 
 
-def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo, eps=0.05):
-    if state_of_art_result.detection_result is None:
-        if considering_result.detection_result is None:
+def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo, eps=0.15):
+    if state_of_art_result.detection_box is None:
+        if considering_result.estimate_box is None:
             return DetectionType.NegativeTrue
         else:
             return DetectionType.NegativeFalse
     else:
-        if considering_result.detection_result is None or not considering_result.detection_result.is_close_to(
-                state_of_art_result.detection_result, eps):
+        if considering_result.estimate_box is None or not considering_result.estimate_box.is_close_to(
+                state_of_art_result.detection_box, eps):
             return DetectionType.PositiveFalse
         else:
             return DetectionType.PositiveTrue

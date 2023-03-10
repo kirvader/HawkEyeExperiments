@@ -31,17 +31,17 @@ class DetectionCounter:
 
 
 def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo,
-                          detection_counter: DetectionCounter, eps=0.05):
+                          detection_counter: DetectionCounter, eps=0.15):
     if state_of_art_result.frame_index != considering_result.frame_index:
         return considering_result.frame_index - state_of_art_result.frame_index
-    if state_of_art_result.detection_result is None:
-        if considering_result.detection_result is None:
+    if state_of_art_result.detection_box is None:
+        if considering_result.detection_box is None:
             detection_counter.not_detected_right += 1
         else:
             detection_counter.not_detected_wrong += 1
     else:
-        if considering_result.detection_result is None or not considering_result.detection_result.is_close_to(
-                state_of_art_result.detection_result, eps):
+        if considering_result.detection_box is None or not considering_result.detection_box.is_close_to(
+                state_of_art_result.detection_box, eps):
             detection_counter.detected_wrong += 1
         else:
             detection_counter.detected_right += 1
@@ -61,7 +61,7 @@ def plot_single_horizontal_chart(videos, fst_part, snd_part):
 
 class DetectionResults:
     def __init__(self, frames_quantity=0, detections_run=0, positive_true=0, positive_false=0, negative_true=0,
-                 negative_false=0, comparing_file=""):
+                 negative_false=0, comparing_file="", good_estimations_amount=0):
         self.frames_quantity = frames_quantity
         self.detections_run = detections_run
         self.positive_true = positive_true
@@ -69,6 +69,7 @@ class DetectionResults:
         self.negative_true = negative_true
         self.negative_false = negative_false
         self.comparing_file = comparing_file
+        self.good_estimations_amount = good_estimations_amount
 
     def take_into_account(self, other):
         self.frames_quantity += other.frames_quantity
@@ -77,6 +78,7 @@ class DetectionResults:
         self.positive_false += other.positive_false
         self.negative_true += other.negative_true
         self.negative_false += other.negative_false
+        self.good_estimations_amount += other.good_estimations_amount
 
     def to_dict(self):
         return {
@@ -86,15 +88,19 @@ class DetectionResults:
             "positive_false": self.positive_false,
             "negative_true": self.negative_true,
             "negative_false": self.negative_false,
-            "comparing_file": self.comparing_file
+            "comparing_file": self.comparing_file,
+            "good_estimations_amount": self.good_estimations_amount
         }
 
     def plot(self, filename):
         figure = plt.figure(figsize=(10, 10))
-        figure.add_subplot(2, 1, 2)
+        figure.add_subplot(3, 1, 2)
         plot_single_horizontal_chart([""], self.detections_run, self.frames_quantity - self.detections_run)
 
-        figure.add_subplot(2, 1, 1)
+        figure.add_subplot(3, 1, 3)
+        plot_single_horizontal_chart([""], self.good_estimations_amount, self.frames_quantity - self.good_estimations_amount)
+
+        figure.add_subplot(3, 1, 1)
         DetectionCounter(self.positive_true, self.positive_false, self.negative_true, self.negative_false).plot()
 
         plt.savefig(filename)
@@ -190,6 +196,8 @@ class MetricGoodDetections(MetricCounterBase):
                                                   current_tracker_with_config: str,
                                                   video_name: str,
                                                   metrics_output_directory: str):
+        good_tracker_estimations_amount = 0
+
         current_comparison_output_directory = MetricCounterBase.get_output_folder_for_single_tracker_single_video(
             state_of_art_tracker_with_config,
             current_tracker_with_config,
@@ -223,6 +231,9 @@ class MetricGoodDetections(MetricCounterBase):
                 s2 += 1
             else:
                 compare_frame_results(considering_data[s1], state_of_art_data[s2], detections_counter)
+                if state_of_art_data[s2].detection_box is not None and considering_data[s1].estimate_box is not None:
+                    if considering_data[s1].estimate_box.is_close_to(state_of_art_data[s2].detection_box, 0.15):
+                        good_tracker_estimations_amount += 1
                 s1 += 1
                 s2 += 1
 
