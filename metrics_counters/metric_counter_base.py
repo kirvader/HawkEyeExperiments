@@ -44,7 +44,10 @@ class MetricCounterBase:
                                                         video_names: list,
                                                         metrics_output_directory: str,
                                                         metric_name: str) -> Path:
-        list_of_comparing_videos = "-".join(map(lambda s: s.replace('/', '-'), video_names))
+        if len(video_names) > 3:
+            list_of_comparing_videos = "-".join(map(lambda s: s.replace('/', '-'), video_names[:3])) + "_and_more"
+        else:
+            list_of_comparing_videos = "-".join(map(lambda s: s.replace('/', '-'), video_names))
         current_comparison_output_directory = Path(
             metrics_output_directory) / "by_tracker" / current_tracker_with_config / f"{metric_name}-{state_of_art_tracker_with_config.replace('/', '-')}" / list_of_comparing_videos
         current_comparison_output_directory.mkdir(parents=True, exist_ok=True)
@@ -56,7 +59,10 @@ class MetricCounterBase:
                                                          video_name: str,
                                                          metrics_output_directory: str,
                                                          metric_name: str) -> Path:
-        comparing_list_of_trackers = "-".join(map(lambda s: s.replace('/', '-'), trackers_name_with_config))
+        if len(trackers_name_with_config) > 3:
+            comparing_list_of_trackers = "-".join(map(lambda s: s.replace('/', '-'), trackers_name_with_config[:3])) + "_and_more"
+        else:
+            comparing_list_of_trackers = "-".join(map(lambda s: s.replace('/', '-'), trackers_name_with_config))
         current_comparison_output_directory = Path(
             metrics_output_directory) / "by_video" / video_name / f"{metric_name}-{state_of_art_tracker_with_config.replace('/', '-')}" / comparing_list_of_trackers
         current_comparison_output_directory.mkdir(parents=True, exist_ok=True)
