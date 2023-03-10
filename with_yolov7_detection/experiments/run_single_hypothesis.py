@@ -28,6 +28,9 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
     is_first_detection = True
     with tqdm(range(1, length), desc=f"{tracker_impl.__class__.__name__}", position=0, leave=True) as tqdm_bar:
         for _ in tqdm_bar:
+            # estimate for current position from tracker perspective
+            estimate_object_pos = tracker_impl.get_estimate_position(current_time)
+
             if tracker_impl.is_available(current_time):
                 prediction_area = tracker_impl.get_prediction_area(current_time)
 
@@ -44,7 +47,15 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
                 else:
                     raw_results_file.write(',\n')
                 raw_results_file.write(
-                    json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection).to_dict(), indent=4))
+                    json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection, estimate_object_pos).to_dict(), indent=4))
+            else:
+                if is_first_detection:
+                    is_first_detection = False
+                else:
+                    raw_results_file.write(',\n')
+                raw_results_file.write(
+                    json.dumps(FrameProcessingInfo(current_index, None, None, estimate_object_pos).to_dict(), indent=4))
+
 
             if debug_mode:
                 cv2.imshow("result", frame)

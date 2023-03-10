@@ -14,5 +14,8 @@ class SingleObjectTrackerBase:
     def process_frame(self, frame, timestamp: int) -> Box:
         pass
 
+    def get_estimate_position(self, timestamp: int) -> Box:
+        pass
+
     def get_prediction_area(self, timestamp: int) -> Box:
         pass
