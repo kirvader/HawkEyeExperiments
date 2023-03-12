@@ -12,7 +12,7 @@ sys.path.append(str(project_root))
 from box_drawer_config import PREDICTION_AREA_LINE_COLOR, \
     PREDICTION_AREA_LINE_THICKNESS, \
     LAST_DETECTION_LINE_COLOR, \
-    LAST_DETECTION_LINE_THICKNESS
+    LAST_DETECTION_LINE_THICKNESS, ESTIMATION_LINE_THICKNESS, ESTIMATION_LINE_COLOR
 from utils.frame_processing_info import FrameProcessingInfo
 
 
@@ -21,10 +21,16 @@ def apply_processing_result_to_frame(frame, frame_processing_info, width, height
         frame = frame_processing_info.prediction_area.draw(frame, width, height,
                                                            PREDICTION_AREA_LINE_COLOR,
                                                            PREDICTION_AREA_LINE_THICKNESS)
-    if frame_processing_info.detection_result is not None:
-        frame = frame_processing_info.detection_result.draw(frame, width, height,
-                                                            LAST_DETECTION_LINE_COLOR,
-                                                            LAST_DETECTION_LINE_THICKNESS)
+    if frame_processing_info.detection_box is not None:
+        frame = frame_processing_info.detection_box.draw(frame, width, height,
+                                                         LAST_DETECTION_LINE_COLOR,
+                                                         LAST_DETECTION_LINE_THICKNESS)
+    if frame_processing_info.estimate_box is not None:
+        frame_processing_info.estimate_box.w += 0.04
+        frame_processing_info.estimate_box.h += 0.04
+        frame = frame_processing_info.estimate_box.draw(frame, width, height,
+                                                        ESTIMATION_LINE_COLOR,
+                                                        ESTIMATION_LINE_THICKNESS)
 
 
 def concat_frames(frames: list):
@@ -72,7 +78,7 @@ def export_processed_video(raw_video_path: str,
             frame_i = frame.copy()
             if current_results_index[i] != len(raw_results[i]):
                 if current_frame_index == raw_results[i][current_results_index[i]].frame_index:
-                    apply_processing_result_to_frame(frame, raw_results[i][current_results_index[i]], width, height)
+                    apply_processing_result_to_frame(frame_i, raw_results[i][current_results_index[i]], width, height)
                     current_results_index[i] += 1
             frame_i = cv2.putText(frame_i, tracker_names[i], (0, 0), cv2.FONT_HERSHEY_SIMPLEX,
                                   1, (255, 255, 255), 2, cv2.LINE_AA)
@@ -119,8 +125,13 @@ def export_processed_videos_all_in_one_video(raw_results_directory: str,
             tracker_config_split = tracker_with_config.split("/")
             tracker_name = tracker_config_split[0]
             config_name = tracker_config_split[1]
-            output_filename += f"-{tracker_name}:{config_name}"
+            output_filename += f"-{tracker_name}_{config_name}"
         output_filename += ".mp4"
+        print(str(current_raw_video_path))
+        print(raw_results_path_and_name)
+        print(str(Path(output_directory)))
+        print(output_filename)
+
         export_processed_video(str(current_raw_video_path), raw_results_path_and_name,
                                str(Path(output_directory) / output_filename))
 
