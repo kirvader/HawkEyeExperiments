@@ -31,7 +31,7 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
             # estimate for current position from tracker perspective
             prediction_area = None
             last_detection = None
-            estimate_object_pos = None
+            estimation_object_pos = None
 
             if tracker_impl.is_available(current_time):
                 prediction_area = tracker_impl.get_prediction_area(current_time)
@@ -44,14 +44,15 @@ def run_solution(tracker_impl: SingleObjectTrackerBase,
                     tqdm_bar.set_postfix_str(f"{current_index} - Found")
                 tqdm_bar.refresh()
 
-            estimate_object_pos = tracker_impl.get_estimate_position(current_time)
+            real_time_estimation_object_pos = tracker_impl.get_real_time_estimate_position(current_time)
+            estimation_object_pos = tracker_impl.get_estimate_position(current_time)
 
             if is_first_detection:
                 is_first_detection = False
             else:
                 raw_results_file.write(',\n')
             raw_results_file.write(
-                json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection, estimate_object_pos).to_dict(), indent=4))
+                json.dumps(FrameProcessingInfo(current_index, prediction_area, last_detection, estimation_object_pos, real_time_estimation_object_pos).to_dict(), indent=4))
 
             if debug_mode:
                 cv2.imshow("result", frame)

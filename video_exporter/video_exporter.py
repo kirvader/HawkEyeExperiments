@@ -12,7 +12,8 @@ sys.path.append(str(project_root))
 from box_drawer_config import PREDICTION_AREA_LINE_COLOR, \
     PREDICTION_AREA_LINE_THICKNESS, \
     LAST_DETECTION_LINE_COLOR, \
-    LAST_DETECTION_LINE_THICKNESS, ESTIMATION_LINE_THICKNESS, ESTIMATION_LINE_COLOR
+    LAST_DETECTION_LINE_THICKNESS, ESTIMATION_LINE_THICKNESS, ESTIMATION_LINE_COLOR, REAL_TIME_ESTIMATION_LINE_COLOR, \
+    REAL_TIME_ESTIMATION_LINE_THICKNESS
 from utils.frame_processing_info import FrameProcessingInfo
 
 
@@ -26,11 +27,17 @@ def apply_processing_result_to_frame(frame, frame_processing_info, width, height
                                                          LAST_DETECTION_LINE_COLOR,
                                                          LAST_DETECTION_LINE_THICKNESS)
     if frame_processing_info.estimate_box is not None:
-        frame_processing_info.estimate_box.w += 0.04
-        frame_processing_info.estimate_box.h += 0.04
+        frame_processing_info.estimate_box.w += 0.025
+        frame_processing_info.estimate_box.h += 0.025
         frame = frame_processing_info.estimate_box.draw(frame, width, height,
                                                         ESTIMATION_LINE_COLOR,
                                                         ESTIMATION_LINE_THICKNESS)
+    if frame_processing_info.real_time_estimate_box is not None:
+        frame_processing_info.real_time_estimate_box.w += 0.025
+        frame_processing_info.real_time_estimate_box.h += 0.025
+        frame = frame_processing_info.real_time_estimate_box.draw(frame, width, height,
+                                                        REAL_TIME_ESTIMATION_LINE_COLOR,
+                                                        REAL_TIME_ESTIMATION_LINE_THICKNESS)
 
 
 def concat_frames(frames: list):

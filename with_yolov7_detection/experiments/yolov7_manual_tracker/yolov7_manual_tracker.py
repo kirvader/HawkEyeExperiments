@@ -19,6 +19,10 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
         self.last_good_result_timestamp = -10000
         self.last_good_result = Box(0.5, 0.5, 1.0, 1.0)
 
+        self.prelast_good_result_timestamp = -10000
+        self.prelast_good_result = Box(0.5, 0.5, 1.0, 1.0)
+
+        self.prev_center_velocity = (0.0, 0.0)
         self.center_velocity = (0.0, 0.0)
         self.prediction_area_size_velocity = (1.0, 1.0)
         self.successful_detection_relevance_time = 600
@@ -33,8 +37,6 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
                                  (64, 120, 0.0125),
                                  (32, 80, 0.0)]
         self.detectors = None
-        # self.detectors = [(YOLOv7SingleDetectionRunner(Args(classes=[tracking_cls], img_size=img_sz)), inference_time,
-        #                    bound_for_applying) for img_sz, inference_time, bound_for_applying in self.detectors_config]
         self.tracking_cls = tracking_cls
 
     def setup(self, filename: str):
@@ -67,6 +69,7 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
 
     def update_velocities_and_last_good_detection(self, detection: Box, timestamp: int):
         dt = timestamp - self.last_good_result_timestamp
+        self.prev_center_velocity = self.center_velocity
         self.center_velocity = ((detection.x - self.last_good_result.x) * self.deceleration_coef / dt,
                                 (detection.y - self.last_good_result.y) * self.deceleration_coef / dt)
         self.prediction_area_size_velocity = (
@@ -104,6 +107,8 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
 
         results = self.detectors[detector_index][0].run(cropped_frame)
         self.next_inference_timestamp = timestamp + self.detectors[detector_index][1]
+        self.prelast_good_result_timestamp = self.last_good_result_timestamp
+        self.prelast_good_result = self.last_good_result
         if len(results) == 0:
             return None
 
@@ -125,6 +130,15 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
 
     def get_prediction_area(self, timestamp: int) -> Box:
         return self.get_detection_area_for_inference(timestamp)
+
+    def get_real_time_estimate_position(self, timestamp: int) -> Box:
+        if timestamp - self.prelast_good_result_timestamp > self.successful_detection_relevance_time:
+            return None
+        return Box(max(0.0, min(1.0, self.prelast_good_result.x + (timestamp - self.prelast_good_result_timestamp) *
+                                          self.prev_center_velocity[0] * self.estimation_position_velocity_deceleration_coef)),
+                             max(0.0, min(1.0, self.prelast_good_result.y + (timestamp - self.prelast_good_result_timestamp) *
+                                          self.prev_center_velocity[1] * self.estimation_position_velocity_deceleration_coef)),
+                             self.prelast_good_result.w, self.prelast_good_result.h)
 
 
 if __name__ == "__main__":

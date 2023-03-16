@@ -17,5 +17,8 @@ class SingleObjectTrackerBase:
     def get_estimate_position(self, timestamp: int) -> Box:
         pass
 
+    def get_real_time_estimate_position(self, timestamp: int) -> Box:
+        pass
+
     def get_prediction_area(self, timestamp: int) -> Box:
         pass

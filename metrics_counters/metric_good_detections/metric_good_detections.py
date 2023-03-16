@@ -98,7 +98,8 @@ class DetectionResults:
         plot_single_horizontal_chart([""], self.detections_run, self.frames_quantity - self.detections_run)
 
         figure.add_subplot(3, 1, 3)
-        plot_single_horizontal_chart([""], self.good_estimations_amount, self.frames_quantity - self.good_estimations_amount)
+        plot_single_horizontal_chart([""], self.good_estimations_amount,
+                                     self.frames_quantity - self.good_estimations_amount)
 
         figure.add_subplot(3, 1, 1)
         DetectionCounter(self.positive_true, self.positive_false, self.negative_true, self.negative_false).plot()
@@ -110,7 +111,7 @@ class DetectionResults:
     def from_dict(data):
         return DetectionResults(data["frames_quantity"], data["detections_run"], data["positive_true"],
                                 data["positive_false"], data["negative_true"], data["negative_false"],
-                                data["comparing_file"])
+                                data["comparing_file"], data["good_estimations_amount"])
 
 
 class MetricGoodDetections(MetricCounterBase):
@@ -231,8 +232,8 @@ class MetricGoodDetections(MetricCounterBase):
                 s2 += 1
             else:
                 compare_frame_results(considering_data[s1], state_of_art_data[s2], detections_counter)
-                if state_of_art_data[s2].detection_box is not None and considering_data[s1].estimate_box is not None:
-                    if considering_data[s1].estimate_box.is_close_to(state_of_art_data[s2].detection_box, 0.15):
+                if state_of_art_data[s2].detection_box is not None and considering_data[s1].real_time_estimate_box is not None:
+                    if considering_data[s1].real_time_estimate_box.is_close_to(state_of_art_data[s2].detection_box, 0.075):
                         good_tracker_estimations_amount += 1
                 s1 += 1
                 s2 += 1
@@ -241,7 +242,8 @@ class MetricGoodDetections(MetricCounterBase):
             json_file.write(json.dumps(
                 DetectionResults(frames_quantity, len(considering_data), detections_counter.detected_right,
                                  detections_counter.detected_wrong, detections_counter.not_detected_right,
-                                 detections_counter.not_detected_wrong, state_of_art_tracker_with_config).to_dict(),
+                                 detections_counter.not_detected_wrong, state_of_art_tracker_with_config,
+                                 good_tracker_estimations_amount).to_dict(),
                 indent=4))
 
         plot_single_horizontal_chart([""], len(considering_data), frames_quantity - len(considering_data))
