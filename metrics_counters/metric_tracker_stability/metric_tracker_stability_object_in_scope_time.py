@@ -82,7 +82,7 @@ def plot_stability_results(results: StabilityResults, label: str, fps: float, li
 
 
 def save_plot_for_stability_resutls(is_normalized: bool, filename: str):
-    plt.legend()
+    plt.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
     if is_normalized:
         plt.title("Stability(normalized)")
         plt.xlabel("Focus bound, s")

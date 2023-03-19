@@ -165,7 +165,7 @@ class MetricGoodDetections(MetricCounterBase):
         ax.set_xticks(ticks + width / 2)
         ax.set_xticklabels(["Positive true", "Positive false", "Negative true", "Negative false"])
 
-        ax.legend(loc='best')
+        plt.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
         plt.savefig(str(current_comparison_output_directory / "accuracy.png"))
 
     def count_average_across_many_videos(self,
