@@ -3,6 +3,7 @@ import sys
 from enum import Enum
 from pathlib import Path
 import matplotlib.pyplot as plt
+import numpy as np
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
@@ -56,6 +57,7 @@ class StabilityResults:
             self.data[i] *= multiplier
 
     def to_dict(self):
+        print(self.data)
         return {
             "data": self.data,
         }
@@ -65,9 +67,8 @@ class StabilityResults:
         return StabilityResults(src["data"])
 
 
-
-def plot_stability_results(results: StabilityResults, bounds: list):
-    extended_bounds = bounds + [1000000]
+def plot_stability_results(ax, results: StabilityResults, bounds: list, width=0.6, delta_x=-0.3, color="b"):
+    extended_bounds = bounds + [bounds[-1] * 1.3]
     old_bound_index = -1
     current_bound_index = -1
 
@@ -78,21 +79,15 @@ def plot_stability_results(results: StabilityResults, bounds: list):
         quantity_in_current_bounds = current_bound_index - old_bound_index
         bar_sizes.append(quantity_in_current_bounds)
         old_bound_index = current_bound_index
-    bounds_to_show = list(map(str, bounds))
-    bounds_to_show.append(f">{bounds[-1]}")
-    plt.bar(bounds_to_show, bar_sizes)
+    ax.bar(np.arange(len(bounds) + 1) + delta_x, bar_sizes, width=width, color=color)
 
 
-def save_plot_for_stability_resutls(is_normalized: bool, filename: str):
-    plt.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
-    if is_normalized:
-        plt.title("Stability(normalized)")
-        plt.xlabel("Focus bound, s")
-        plt.ylabel("Time approved, %")
-    else:
-        plt.title("Stability")
-        plt.xlabel("Focus bound, s")
-        plt.ylabel("Time approved, s")
+def save_results(str_bounds_to_show: list, filename: str):
+    plt.xticks(range(len(str_bounds_to_show)), str_bounds_to_show)
+    plt.title("Stability metric")
+    plt.xlabel("Bounds, ms")
+    plt.ylabel("Quantity, times")
+
     plt.savefig(filename)
     plt.close()
 
@@ -100,9 +95,14 @@ def save_plot_for_stability_resutls(is_normalized: bool, filename: str):
 class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
     METRIC_NAME = "METRIC_TRACKER_STABILITY_OBJECT_IN_SCOPE_TIME"
 
-    def __init__(self, max_lost_object_on_consecutive_frames=60, fps=30):
-        self.max_lost_object_on_consecutive_frames = max_lost_object_on_consecutive_frames
+    def __init__(self, bounds=None, fps=30):
+        if bounds is None:
+            bounds = [60, 120, 200, 300, 400, 500, 600, 800, 1000, 1200]
         self.fps = fps
+        self.bounds = bounds
+        self.general_colors = [
+            'b', 'g', 'r', 'c', 'm', 'y', 'k'
+        ]
 
     def compare_trackers_on_single_video(self,
                                          metrics_output_directory: str,
@@ -116,9 +116,15 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
             metrics_output_directory,
             MetricTrackerStabilityObjectInScopeTime.METRIC_NAME
         )
+        width = 0.7 / len(tracker_names_with_configs)
+        colors = {}
 
-        possible_max = -1
-        for tracker_name_with_config in tracker_names_with_configs:
+        fig = plt.figure()
+        ax = plt.subplot(111)
+
+        for i in range(len(tracker_names_with_configs)):
+            tracker_name_with_config = tracker_names_with_configs[i]
+            colors[tracker_name_with_config] = self.general_colors[i % len(self.general_colors)]
             current_tracker_metric_raw_results_file = MetricCounterBase.get_output_folder_for_single_tracker_single_video(
                 state_of_art_tracker_with_config,
                 tracker_name_with_config,
@@ -129,39 +135,28 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
             with open(current_tracker_metric_raw_results_file) as f:
                 json_object = json.load(f)
             current_tracker_with_config_stability_results = StabilityResults.from_dict(json_object)
-            possible_max = current_tracker_with_config_stability_results.possible_max
-            plot_stability_results(current_tracker_with_config_stability_results, tracker_name_with_config, self.fps)
-        plot_possible_max_for_stability_results(self.max_lost_object_on_consecutive_frames, possible_max, self.fps)
-        save_plot_for_stability_resutls(False, str(current_comparison_output_directory / "stability.png"))
+            plot_stability_results(ax, current_tracker_with_config_stability_results, self.bounds, width,
+                                   -(width / 2 + width * i), colors[tracker_name_with_config])
+
+        labels = list(colors.keys())
+        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
+
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width, box.height * 0.7])
+
+        plt.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.0, 1.4))
+
+        bounds_to_show = list(map(str, self.bounds))
+        bounds_to_show.append(f">{self.bounds[-1]}")
+
+        save_results(bounds_to_show, str(current_comparison_output_directory / "stability.png"))
 
     def count_average_across_many_videos(self,
                                          metrics_raw_results_folder: str,
                                          tracker_name_with_config: str,
                                          state_of_art_tracker_with_config: str,
                                          video_names: list):
-        current_output_folder = MetricCounterBase.get_output_folder_for_single_tracker_many_video(
-            state_of_art_tracker_with_config, tracker_name_with_config, video_names, metrics_raw_results_folder,
-            MetricTrackerStabilityObjectInScopeTime.METRIC_NAME)
-
-        average = StabilityResults([0 for _ in range(self.max_lost_object_on_consecutive_frames)], 100.0)
-        plot_possible_max_for_stability_results(self.max_lost_object_on_consecutive_frames, 100.0, self.fps)
-        for video_name in video_names:
-            current_tracker_metric_raw_results_file = MetricCounterBase.get_output_folder_for_single_tracker_single_video(
-                state_of_art_tracker_with_config,
-                tracker_name_with_config,
-                video_name,
-                metrics_raw_results_folder,
-                MetricTrackerStabilityObjectInScopeTime.METRIC_NAME
-            ) / "raw.json"
-            with open(current_tracker_metric_raw_results_file) as f:
-                json_object = json.load(f)
-            current_tracker_with_config_stability_results = StabilityResults.from_dict(json_object)
-            current_tracker_with_config_stability_results.normalize()
-            average.plus_data(current_tracker_with_config_stability_results)
-            plot_stability_results(current_tracker_with_config_stability_results, video_name, self.fps)
-        average.multiply_data(1 / len(video_names))
-        plot_stability_results(average, "Average", self.fps, 4.5)
-        save_plot_for_stability_resutls(True, str(current_output_folder / "stability.png"))
+        pass
 
     def count_tracker_performance_on_single_video(self,
                                                   raw_results_directory: str,
@@ -189,7 +184,7 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
             video_name
         )
 
-        time_deltas_between_good_estimations = [] #  good estimation = estimation which is close to real result.
+        time_deltas_between_good_estimations = []  # good estimation = estimation which is close to real result.
         last_good_detection_frame_index = 0
         s1 = 0
         s2 = 0
@@ -203,9 +198,15 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
                 continue
             current_frame_estimation_rating = compare_frame_results(considering_data[s1], state_of_art_data[s2])
             if current_frame_estimation_rating == DetectionType.PositiveTrue:
-                time_since_last_good_estimation = (considering_data[s1].frame_index - last_good_detection_frame_index) / self.fps
+                time_since_last_good_estimation = (considering_data[
+                                                       s1].frame_index - last_good_detection_frame_index) * 1000 / self.fps
                 time_deltas_between_good_estimations.append(time_since_last_good_estimation)
                 last_good_detection_frame_index = considering_data[s1].frame_index
+            s1 += 1
+            s2 += 1
+
+        fig = plt.figure()
+        ax = plt.subplot(111)
 
         time_deltas_between_good_estimations.sort()
         stability_results = StabilityResults(time_deltas_between_good_estimations)
@@ -213,68 +214,93 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
         with open(str(current_comparison_output_directory / "raw.json"), "w") as f:
             f.write(json.dumps(stability_results.to_dict(), indent=4))
 
-        plot_stability_results(stability_results, current_tracker_with_config)
-        save_plot_for_stability_resutls(False, str(current_comparison_output_directory / f"stability.png"))
+        plot_stability_results(ax, stability_results, self.bounds)
+
+        bounds_to_show = list(map(str, self.bounds))
+        bounds_to_show.append(f">{self.bounds[-1]}")
+
+        save_results(bounds_to_show, str(current_comparison_output_directory / f"stability.png"))
 
 
 if __name__ == "__main__":
     MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "pure_yolov7_detector/state_of_art",
-        "1",
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
-
-    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "pure_yolov7_detector/state_of_art",
-        "1",
+        "marked/manually",
+        "manual_tracking_with_yolov7/with_speed_dec_0_5_est_coef_0_7",
+        "1_slow_ball_with_shadow",
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
     MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "pure_yolov7_detector/default",
-        "1",
+        "marked/manually",
+        "manual_tracking_with_yolov7/with_speed_dec_0_7_est_coef_0_7",
+        "1_slow_ball_with_shadow",
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
     MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "pure_yolov7_detector/default",
-        "2",
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
-    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "pure_yolov7_detector/default",
-        "3",
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
-    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "manual_tracking_with_yolov7/no_speed",
-        "1",
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
-    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
-        "pure_yolov7_detector/state_of_art",
-        "manual_tracking_with_yolov7/with_speed",
-        "1",
+        "marked/manually",
+        "manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7",
+        "1_slow_ball_with_shadow",
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
     MetricTrackerStabilityObjectInScopeTime().compare_trackers_on_single_video(
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
-        [
-            "pure_yolov7_detector/state_of_art",
-            "pure_yolov7_detector/default",
-            "manual_tracking_with_yolov7/no_speed",
-            "manual_tracking_with_yolov7/with_speed"
-        ],
-        "pure_yolov7_detector/state_of_art",
-        "1"
+        ["manual_tracking_with_yolov7/with_speed_dec_0_5_est_coef_0_7",
+         "manual_tracking_with_yolov7/with_speed_dec_0_7_est_coef_0_7",
+         "manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7",
+         ],
+        "marked/manually",
+        "1_slow_ball_with_shadow",
     )
-    MetricTrackerStabilityObjectInScopeTime().count_average_across_many_videos(
-        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
-        "pure_yolov7_detector/default",
-        "pure_yolov7_detector/state_of_art",
-        ["1", "2", "3"]
-    )
+
+    # MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "1",
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    # MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "pure_yolov7_detector/default",
+    #     "1",
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    # MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "pure_yolov7_detector/default",
+    #     "2",
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    # MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "pure_yolov7_detector/default",
+    #     "3",
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    # MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "manual_tracking_with_yolov7/no_speed",
+    #     "1",
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    # MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+    #     "pure_yolov7_detector/state_of_art",
+    #     "manual_tracking_with_yolov7/with_speed",
+    #     "1",
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    # MetricTrackerStabilityObjectInScopeTime().compare_trackers_on_single_video(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
+    #     [
+    #         "pure_yolov7_detector/state_of_art",
+    #         "pure_yolov7_detector/default",
+    #         "manual_tracking_with_yolov7/no_speed",
+    #         "manual_tracking_with_yolov7/with_speed"
+    #     ],
+    #     "pure_yolov7_detector/state_of_art",
+    #     "1"
+    # )
+    # MetricTrackerStabilityObjectInScopeTime().count_average_across_many_videos(
+    #     "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
+    #     "pure_yolov7_detector/default",
+    #     "pure_yolov7_detector/state_of_art",
+    #     ["1", "2", "3"]
+    # )
