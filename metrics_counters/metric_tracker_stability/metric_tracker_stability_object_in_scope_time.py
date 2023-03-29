@@ -29,7 +29,7 @@ class DetectionType(Enum):
             return DetectionType.NegativeFalse
 
 
-def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo, eps=0.15):
+def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_result: FrameProcessingInfo, eps=0.05):
     if state_of_art_result.detection_box is None:
         if considering_result.real_time_estimate_box is None:
             return DetectionType.NegativeTrue
@@ -44,9 +44,8 @@ def compare_frame_results(considering_result: FrameProcessingInfo, state_of_art_
 
 
 class StabilityResults:
-    def __init__(self, data: list, possible_max: float):
+    def __init__(self, data: list):
         self.data = data
-        self.possible_max = possible_max
 
     def plus_data(self, other):
         for i in range(len(self.data)):
@@ -59,26 +58,29 @@ class StabilityResults:
     def to_dict(self):
         return {
             "data": self.data,
-            "possible_max": self.possible_max
         }
-
-    def normalize(self):
-        for i in range(len(self.data)):
-            self.data[i] *= 100.0 / self.possible_max
-        self.possible_max = 100.0
 
     @staticmethod
     def from_dict(src: dict):
-        return StabilityResults(src["data"], src["possible_max"])
+        return StabilityResults(src["data"])
 
 
-def plot_possible_max_for_stability_results(xs_length: int, possible_max: float, fps: float):
-    plt.plot(list(map(lambda item: item / fps, range(xs_length))),
-             [possible_max for _ in range(xs_length)], label="Possible max", linewidth=3)
 
+def plot_stability_results(results: StabilityResults, bounds: list):
+    extended_bounds = bounds + [1000000]
+    old_bound_index = -1
+    current_bound_index = -1
 
-def plot_stability_results(results: StabilityResults, label: str, fps: float, linewidth=1.5):
-    plt.plot(list(map(lambda item: item / fps, range(len(results.data)))), results.data, label=label, linewidth=linewidth)
+    bar_sizes = []
+    for bound in extended_bounds:
+        while current_bound_index + 1 < len(results.data) and results.data[current_bound_index + 1] <= bound:
+            current_bound_index += 1
+        quantity_in_current_bounds = current_bound_index - old_bound_index
+        bar_sizes.append(quantity_in_current_bounds)
+        old_bound_index = current_bound_index
+    bounds_to_show = list(map(str, bounds))
+    bounds_to_show.append(f">{bounds[-1]}")
+    plt.bar(bounds_to_show, bar_sizes)
 
 
 def save_plot_for_stability_resutls(is_normalized: bool, filename: str):
@@ -187,9 +189,8 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
             video_name
         )
 
-        frames_since_last_good_detection = [0 for _ in range(self.max_lost_object_on_consecutive_frames)]
-        overall_frames_quantity_when_object_lost = [0 for _ in range(self.max_lost_object_on_consecutive_frames)]
-
+        time_deltas_between_good_estimations = [] #  good estimation = estimation which is close to real result.
+        last_good_detection_frame_index = 0
         s1 = 0
         s2 = 0
         while s1 < len(considering_data) and s2 < len(state_of_art_data):
@@ -198,36 +199,21 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
                 s1 += 1
                 continue
             if index_compare_result > 0:
-                for i in range(self.max_lost_object_on_consecutive_frames):
-                    frames_since_last_good_detection[i] += 1
                 s2 += 1
                 continue
-            current_pair_result = compare_frame_results(considering_data[s1], state_of_art_data[s2])
-            if current_pair_result == DetectionType.PositiveTrue:
-                for i in range(self.max_lost_object_on_consecutive_frames):
-                    if frames_since_last_good_detection[i] > i:
-                        overall_frames_quantity_when_object_lost[i] += frames_since_last_good_detection[i]
-                    frames_since_last_good_detection[i] = 0
-            else:
-                for i in range(self.max_lost_object_on_consecutive_frames):
-                    frames_since_last_good_detection[i] += 1
-            s1 += 1
-            s2 += 1
-        for i in range(self.max_lost_object_on_consecutive_frames):
-            if frames_since_last_good_detection[i] > i:
-                overall_frames_quantity_when_object_lost[i] += frames_since_last_good_detection[i]
-            frames_since_last_good_detection[i] = 0
+            current_frame_estimation_rating = compare_frame_results(considering_data[s1], state_of_art_data[s2])
+            if current_frame_estimation_rating == DetectionType.PositiveTrue:
+                time_since_last_good_estimation = (considering_data[s1].frame_index - last_good_detection_frame_index) / self.fps
+                time_deltas_between_good_estimations.append(time_since_last_good_estimation)
+                last_good_detection_frame_index = considering_data[s1].frame_index
 
-        stability_results = StabilityResults(list(
-            map(lambda item: (len(state_of_art_data) - item) / self.fps, overall_frames_quantity_when_object_lost)),
-            len(state_of_art_data) / self.fps)
+        time_deltas_between_good_estimations.sort()
+        stability_results = StabilityResults(time_deltas_between_good_estimations)
 
         with open(str(current_comparison_output_directory / "raw.json"), "w") as f:
             f.write(json.dumps(stability_results.to_dict(), indent=4))
 
-        plot_possible_max_for_stability_results(self.max_lost_object_on_consecutive_frames,
-                                                stability_results.possible_max, self.fps)
-        plot_stability_results(stability_results, current_tracker_with_config, self.fps)
+        plot_stability_results(stability_results, current_tracker_with_config)
         save_plot_for_stability_resutls(False, str(current_comparison_output_directory / f"stability.png"))
 
 
