@@ -2,6 +2,8 @@ import json
 import sys
 from pathlib import Path
 
+from with_yolov7_detection.experiments.inference_utils.detection_result import transform_to_absolute_from_relative
+
 project_root = Path(__file__).parent.parent.parent
 
 sys.path.append(str(project_root))
@@ -22,6 +24,7 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
         self.last_successful_detection_data = (None, 0)  # Box and timestamp
         self.prelast_successful_detection_data = (None, 0)  # Box and timestamp
         self.successful_detection_relevance_time = successful_detection_relevance_time
+        self.scale_is_natural = False
 
     def setup(self, filename: str):
         with open(filename, "r") as f:
@@ -32,6 +35,7 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
         self.successful_detection_relevance_time = json_object["successful_detection_relevance_time"]
 
         self.detector = YOLOv7SingleDetectionRunner(Args(classes=[self.tracking_cls], weights=self.weights))
+        self.scale_is_natural = bool(json_object["successful_detection_relevance_time"])
 
     def export_config(self, filename: str):
         with open(filename, "w") as f:
@@ -39,7 +43,8 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
                 "tracking_cls": self.tracking_cls,
                 "detector_inference_time": self.detector_inference_time,
                 "weights": self.weights,
-                "successful_detection_relevance_time": self.successful_detection_relevance_time
+                "successful_detection_relevance_time": self.successful_detection_relevance_time,
+                "scale_is_natural": self.scale_is_natural
             }, indent=4))
 
     def is_available(self, timestamp: int) -> bool:
@@ -47,7 +52,28 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
 
     def process_frame(self, frame, timestamp: int) -> Box:
         self.last_inference_start_time = timestamp
-        results = self.detector.run(frame)
+        results = []
+        if not self.scale_is_natural:
+            results = self.detector.run(frame)
+        else: # only if the size of model is less than all the frame dimensions
+            height = frame.shape[0]
+            width = frame.shape[1]
+            model_size = 640
+
+            for top_index in range(0, height, model_size):
+                bottom_index = min(top_index + model_size, height)
+                calibrated_top_index = bottom_index - model_size
+                for left_index in range(0, width, model_size):
+                    right_index = min(left_index + model_size, width)
+                    calibrated_left_index = right_index - model_size
+                    current_slice = frame[calibrated_top_index:bottom_index, calibrated_left_index:right_index]
+                    current_slice_results = self.detector.run(current_slice)
+                    container_box = Box((calibrated_left_index + right_index) / 2 / width,
+                                        (calibrated_top_index + bottom_index) / 2 / height,
+                                        (right_index - calibrated_left_index) / width,
+                                        (bottom_index - calibrated_top_index) / height)
+                    current_slice_results = list(map(lambda item: transform_to_absolute_from_relative(item, container_box), current_slice_results))
+                    results += current_slice_results
         self.prelast_successful_detection_data = self.last_successful_detection_data
         if len(results) == 0:
             return None

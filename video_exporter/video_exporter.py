@@ -58,6 +58,7 @@ def export_processed_video(raw_video_path: str,
         return
     width = int(in_cap.get(cv2.CAP_PROP_FRAME_WIDTH))  # float `width`
     height = int(in_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
+    # print(f"(width, height): ({width, height})")
     fps = int(in_cap.get(cv2.CAP_PROP_FPS))
     if len(raw_results_path_and_name) < 4:
         out_cap = (len(raw_results_path_and_name) * width, height)
@@ -121,7 +122,10 @@ def export_processed_videos_all_in_one_video(raw_results_directory: str,
                                              raw_videos_directory: str,
                                              video_names: list,
                                              output_directory: str):
+    tracker_names_with_config = list(filter(lambda item: len(item) != 0, tracker_names_with_config))
+    print(tracker_names_with_config)
     assert (len(tracker_names_with_config) <= 4)
+    Path(output_directory).mkdir(parents=True, exist_ok=True)
     for video_name in video_names:
         current_raw_video_path = Path(raw_videos_directory) / f"{video_name}.mp4"
         raw_results_path_and_name = []
@@ -134,10 +138,10 @@ def export_processed_videos_all_in_one_video(raw_results_directory: str,
             config_name = tracker_config_split[1]
             output_filename += f"-{tracker_name}_{config_name}"
         output_filename += ".mp4"
-        print(str(current_raw_video_path))
-        print(raw_results_path_and_name)
-        print(str(Path(output_directory)))
-        print(output_filename)
+        # print(str(current_raw_video_path))
+        # print(raw_results_path_and_name)
+        # print(str(Path(output_directory)))
+        # print(output_filename)
 
         export_processed_video(str(current_raw_video_path), raw_results_path_and_name,
                                str(Path(output_directory) / output_filename))
@@ -147,7 +151,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--videos_containing_folder', type=str, help="""
         This is a folder where all the VIDEO sources are stored.
-    """)
+    """, default="/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/videos")
     parser.add_argument('--video_names', nargs='+', default=[], help="""
         These are the NAMES(without format) of the videos in folder named videos_containing_folder.
         Should be in .mp4 format. 
@@ -155,14 +159,19 @@ def parse_args():
     parser.add_argument('--results_directory', type=str, help="""
         This is a results directory where all the output will be stored.
         It will be created from scratch even if there are intermediate folders.
-    """)
-    parser.add_argument('--tracker_names_with_config', nargs='+', default=[], help="""
+    """, default="/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results")
+    parser.add_argument('--tracker_names_with_config', nargs='+', default=[
+        'pure_yolov7_detector/default',
+        'pure_yolov7_detector/state_of_art',
+        # 'manual_tracking_with_yolov7/no_speed',
+        'manual_tracking_with_yolov7/with_speed_dec_0_5_est_coef_0_7',
+        'manual_tracking_with_yolov7/with_speed_dec_0_7_est_coef_0_7',
+        # 'manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7',
+        ''
+    ], help="""
         List of tracker names with config like "<tracker_name>/<config_name>". Tracker names:
-        - state_of_art_detector = YOLOv7 detection applied to each frame. Main trick here that this 
-        - pure_yolov7_detector = YOLOv7 simple detection with "real" latency.
-        - manual_tracking_with_yolov7 = Manual tracking including object speed control, detection via YOLOv7. Idea is to find the object in the area it was found on previous frame according to object speed.
-    """)
-    parser.add_argument('--output_directory', type=str, help="Results will be stored here!")
+        """)
+    parser.add_argument('--output_directory', type=str, help="Results will be stored here!", default="/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/visualizations")
 
     return parser.parse_args()
 

@@ -50,12 +50,11 @@ class Box:
         return self.w * self.h + other.w * other.h - self.square_of_intersection(other)
 
 
-def transform_to_absolute_from_relative(relative_box, box_container: Box):
-    relative_box.x = box_container.x - box_container.w / 2 + box_container.w * relative_box.x
-    relative_box.y = box_container.y - box_container.h / 2 + box_container.h * relative_box.y
-
-    relative_box.w *= box_container.w
-    relative_box.h *= box_container.h
+def transform_to_absolute_from_relative(relative_box: Box, box_container: Box) -> Box:
+    return Box(box_container.x - box_container.w / 2 + box_container.w * relative_box.x,
+        box_container.y - box_container.h / 2 + box_container.h * relative_box.y,
+        relative_box.w * box_container.w,
+        relative_box.h * box_container.h)
 
 
 class DetectionResult:

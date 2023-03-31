@@ -112,11 +112,11 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
         if len(results) == 0:
             return None
 
-        best_result = max(results, key=lambda detection: detection.conf).box
-        transform_to_absolute_from_relative(best_result, detection_area)
-        self.update_velocities_and_last_good_detection(best_result, timestamp)
+        best_result_relative = max(results, key=lambda detection: detection.conf).box
+        best_result_absolute = transform_to_absolute_from_relative(best_result_relative, detection_area)
+        self.update_velocities_and_last_good_detection(best_result_absolute, timestamp)
 
-        return best_result
+        return best_result_absolute
 
 
     def get_estimate_position(self, timestamp: int) -> Box:

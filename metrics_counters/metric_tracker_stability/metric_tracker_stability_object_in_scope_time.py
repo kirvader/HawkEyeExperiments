@@ -185,7 +185,7 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
         )
 
         time_deltas_between_good_estimations = []  # good estimation = estimation which is close to real result.
-        last_good_detection_frame_index = 0
+        last_good_detection_frame_index = -1
         s1 = 0
         s2 = 0
         while s1 < len(considering_data) and s2 < len(state_of_art_data):
