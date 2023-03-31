@@ -70,8 +70,9 @@ class YOLOv7OnlyDetectionTracker(SingleObjectTrackerBase):
                                         (calibrated_top_index + bottom_index) / 2 / height,
                                         (right_index - calibrated_left_index) / width,
                                         (bottom_index - calibrated_top_index) / height)
-                    current_slice_results = list(map(lambda item: transform_to_absolute_from_relative(item, container_box), current_slice_results))
-                    results += current_slice_results
+                    for current_slice_result in current_slice_results:
+                        current_slice_result.box = transform_to_absolute_from_relative(current_slice_result.box, container_box)
+                    results.append(current_slice_results)
         self.prelast_successful_detection_data = self.last_successful_detection_data
         if len(results) == 0:
             return None
