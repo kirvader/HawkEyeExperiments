@@ -2,13 +2,11 @@ import json
 import sys
 from pathlib import Path
 
-from with_yolov7_detection.experiments.inference_utils.detection_result import transform_to_absolute_from_relative
-
 project_root = Path(__file__).parent.parent.parent
 
 sys.path.append(str(project_root))
 
-from experiments.inference_utils.detection_result import Box, DetectionResult
+from experiments.inference_utils.detection_result import Box, DetectionResult, transform_to_absolute_from_relative
 from experiments.inference_utils.single_frame_yolov7_detector import YOLOv7SingleDetectionRunner, Args
 from experiments.run_single_hypothesis import run_solution
 from experiments.tracker_base import SingleObjectTrackerBase
