@@ -79,7 +79,7 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
 
     def get_detection_area_for_inference(self, timestamp: int):
         bounded_dt = min(self.successful_detection_relevance_time, timestamp - self.last_good_result_timestamp)
-        side_size = min(2.0, exp(min(1.0, self.prediction_area_size_velocity[0] * bounded_dt +
+        side_size = min(2.0, exp(min(1.0, self.prediction_area_size_velocity[0] * 1.5 * bounded_dt +
                                      self.prediction_area_size_velocity[1])))
         prediction_box = Box(max(0.0, min(1.0, self.last_good_result.x + (timestamp - self.last_good_result_timestamp) *
                                           self.center_velocity[0])),
@@ -99,13 +99,40 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
             if self.detectors[i][2] <= square:
                 return i
 
+    def divide_image(self, frame, chosen_model_size):
+        result = []
+        height = frame.shape[0]
+        width = frame.shape[1]
+        for top in range(0, height, chosen_model_size):
+            cal_bottom = min(top + chosen_model_size, height)
+            cal_top = max(0, cal_bottom - chosen_model_size)
+
+            real_height = cal_bottom - cal_top
+            for left in range(0, width, chosen_model_size):
+                cal_right = min(left + chosen_model_size, width)
+                cal_left = max(0, cal_right - chosen_model_size)
+
+                real_width = cal_right - cal_left
+                result.append((frame[cal_top:cal_bottom, cal_left:cal_right].clone(), Box((cal_left + cal_right) / 2 / width, (cal_top + cal_bottom) / 2 / height, real_width / width, real_height / height)))
+        return result
+
     def process_frame(self, frame, timestamp: int) -> Box:
         detection_area = self.get_detection_area_for_inference(timestamp)
         detector_index = self.get_detector_index_by_detection_area(detection_area)
 
         cropped_frame = get_cropped_image(frame, detection_area)
+        frames_to_process = self.divide_image(cropped_frame, self.detectors_config[detector_index][0])
+        results = []
+        for (frame_to_process, frame_box) in frames_to_process:
+            current_frame_results = self.detectors[detector_index][0].run(frame_to_process)
+            if len(current_frame_results) == 0:
+                continue
+            current_frame_best_detection_result = max(current_frame_results, key=lambda detection: detection.conf)
+            current_frame_best_result_relative_box = current_frame_best_detection_result.box
+            current_frame_best_result_absolute = transform_to_absolute_from_relative(current_frame_best_result_relative_box, frame_box)
+            results.append(DetectionResult(current_frame_best_result_absolute, current_frame_best_detection_result.conf, current_frame_best_detection_result.cls))
 
-        results = self.detectors[detector_index][0].run(cropped_frame)
+
         self.next_inference_timestamp = timestamp + self.detectors[detector_index][1]
         self.prelast_good_result_timestamp = self.last_good_result_timestamp
         self.prelast_good_result = self.last_good_result
