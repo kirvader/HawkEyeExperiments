@@ -130,7 +130,7 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
             current_frame_best_detection_result = max(current_frame_results, key=lambda detection: detection.conf)
             current_frame_best_result_relative_box = current_frame_best_detection_result.box
             current_frame_best_result_absolute = transform_to_absolute_from_relative(current_frame_best_result_relative_box, frame_box)
-            results.append(DetectionResult(current_frame_best_result_absolute, current_frame_best_detection_result.conf, current_frame_best_detection_result.cls))
+            results.append(DetectionResult(current_frame_best_result_absolute.x, current_frame_best_result_absolute.y, current_frame_best_result_absolute.w, current_frame_best_result_absolute.h, current_frame_best_detection_result.conf, current_frame_best_detection_result.cls))
 
 
         self.next_inference_timestamp = timestamp + self.detectors[detector_index][1]
