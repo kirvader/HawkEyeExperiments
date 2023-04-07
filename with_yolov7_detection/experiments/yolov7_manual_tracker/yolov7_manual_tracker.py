@@ -113,7 +113,7 @@ class YOLOv7ManualTracker(SingleObjectTrackerBase):
                 cal_left = max(0, cal_right - chosen_model_size)
 
                 real_width = cal_right - cal_left
-                result.append((frame[cal_top:cal_bottom, cal_left:cal_right].clone(), Box((cal_left + cal_right) / 2 / width, (cal_top + cal_bottom) / 2 / height, real_width / width, real_height / height)))
+                result.append((frame[cal_top:cal_bottom, cal_left:cal_right].copy(), Box((cal_left + cal_right) / 2 / width, (cal_top + cal_bottom) / 2 / height, real_width / width, real_height / height)))
         return result
 
     def process_frame(self, frame, timestamp: int) -> Box:
