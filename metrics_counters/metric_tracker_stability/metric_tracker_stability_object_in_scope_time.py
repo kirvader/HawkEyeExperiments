@@ -84,7 +84,7 @@ def plot_stability_results_segmentized(ax, results: StabilityResults, bounds: li
         prefix_bar_sizes.append(current_overall_quantity)
         old_bound_index = current_bound_index
     ax.bar(np.arange(len(bounds) + 1) + delta_x, bar_sizes, width=width, color=color)
-    ax.plot(np.arange(len(bounds) + 1) + delta_x, prefix_bar_sizes, linewidth=1, color=color)
+    ax.plot(np.arange(len(bounds) + 1) + delta_x, prefix_bar_sizes, linewidth=0.7, color=color)
 
 
 def save_results(str_bounds_to_show: list, filename: str):
