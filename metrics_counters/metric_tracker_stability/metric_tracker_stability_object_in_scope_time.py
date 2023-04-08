@@ -57,7 +57,6 @@ class StabilityResults:
             self.data[i] *= multiplier
 
     def to_dict(self):
-        print(self.data)
         return {
             "data": self.data,
         }
