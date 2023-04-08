@@ -144,7 +144,7 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width, box.height * 0.7])
 
-        plt.legend(handles, labels, loc='upper left', bbox_to_anchor=(0.0, 1.4))
+        plt.legend(handles, labels, loc='lower left', bbox_to_anchor=(0.0, 1))
 
         bounds_to_show = list(map(str, self.bounds))
         bounds_to_show.append(f">{self.bounds[-1]}")
@@ -241,12 +241,34 @@ if __name__ == "__main__":
         "manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7",
         "1_slow_ball_with_shadow",
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "marked/manually",
+        "manual_tracking_with_yolov7/no_speed",
+        "1_slow_ball_with_shadow",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "marked/manually",
+        "pure_yolov7_detector/default_with_natural_scale",
+        "1_slow_ball_with_shadow",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
+    MetricTrackerStabilityObjectInScopeTime().count_tracker_performance_on_single_video(
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/raw_results/",
+        "marked/manually",
+        "pure_yolov7_detector/state_of_art_with_natural_scale",
+        "1_slow_ball_with_shadow",
+        "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results")
     MetricTrackerStabilityObjectInScopeTime().compare_trackers_on_single_video(
         "/home/kir/hawk-eye/HawkEyeExperiments/with_yolov7_detection/inference/metrics_results",
-        ["manual_tracking_with_yolov7/with_speed_dec_0_5_est_coef_0_7",
-         "manual_tracking_with_yolov7/with_speed_dec_0_7_est_coef_0_7",
-         "manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7",
-         ],
+        [
+            "manual_tracking_with_yolov7/no_speed",
+            "manual_tracking_with_yolov7/with_speed_dec_0_5_est_coef_0_7",
+            "manual_tracking_with_yolov7/with_speed_dec_0_7_est_coef_0_7",
+            "manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7",
+            "pure_yolov7_detector/default_with_natural_scale",
+            "pure_yolov7_detector/state_of_art_with_natural_scale",
+        ],
         "marked/manually",
         "1_slow_ball_with_shadow",
     )
