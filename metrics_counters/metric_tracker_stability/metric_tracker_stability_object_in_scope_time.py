@@ -67,19 +67,24 @@ class StabilityResults:
         return StabilityResults(src["data"])
 
 
-def plot_stability_results(ax, results: StabilityResults, bounds: list, width=0.6, delta_x=-0.3, color="b"):
+def plot_stability_results_segmentized(ax, results: StabilityResults, bounds: list, width=0.6, delta_x=-0.3, color="b"):
     extended_bounds = bounds + [bounds[-1] * 1.3]
     old_bound_index = -1
     current_bound_index = -1
 
     bar_sizes = []
+    current_overall_quantity = 0
+    prefix_bar_sizes = []
     for bound in extended_bounds:
         while current_bound_index + 1 < len(results.data) and results.data[current_bound_index + 1] <= bound:
             current_bound_index += 1
         quantity_in_current_bounds = current_bound_index - old_bound_index
         bar_sizes.append(quantity_in_current_bounds)
+        current_overall_quantity += quantity_in_current_bounds
+        prefix_bar_sizes.append(current_overall_quantity)
         old_bound_index = current_bound_index
     ax.bar(np.arange(len(bounds) + 1) + delta_x, bar_sizes, width=width, color=color)
+    ax.plot(np.arange(len(bounds) + 1) + delta_x, prefix_bar_sizes, linewidth=1, color=color)
 
 
 def save_results(str_bounds_to_show: list, filename: str):
@@ -135,8 +140,8 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
             with open(current_tracker_metric_raw_results_file) as f:
                 json_object = json.load(f)
             current_tracker_with_config_stability_results = StabilityResults.from_dict(json_object)
-            plot_stability_results(ax, current_tracker_with_config_stability_results, self.bounds, width,
-                                   -(width / 2 + width * i), colors[tracker_name_with_config])
+            plot_stability_results_segmentized(ax, current_tracker_with_config_stability_results, self.bounds, width,
+                                               -(width / 2 + width * i), colors[tracker_name_with_config])
 
         labels = list(colors.keys())
         handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
@@ -214,7 +219,7 @@ class MetricTrackerStabilityObjectInScopeTime(MetricCounterBase):
         with open(str(current_comparison_output_directory / "raw.json"), "w") as f:
             f.write(json.dumps(stability_results.to_dict(), indent=4))
 
-        plot_stability_results(ax, stability_results, self.bounds)
+        plot_stability_results_segmentized(ax, stability_results, self.bounds)
 
         bounds_to_show = list(map(str, self.bounds))
         bounds_to_show.append(f">{self.bounds[-1]}")
@@ -267,7 +272,7 @@ if __name__ == "__main__":
             "manual_tracking_with_yolov7/with_speed_dec_0_7_est_coef_0_7",
             "manual_tracking_with_yolov7/with_speed_dec_1_0_est_coef_0_7",
             "pure_yolov7_detector/default_with_natural_scale",
-            "pure_yolov7_detector/state_of_art_with_natural_scale",
+            # "pure_yolov7_detector/state_of_art_with_natural_scale",
         ],
         "marked/manually",
         "1_slow_ball_with_shadow",
