@@ -162,7 +162,7 @@ class MetricGoodDetections(MetricCounterBase):
         colors = {}
 
         for tracker_name_with_config in results:
-            colors[tracker_name_with_config] = MetricGoodDetections.GENERAL_COLORS[tracker_name_with_config % len(MetricGoodDetections.GENERAL_COLORS)]
+            colors[tracker_name_with_config] = MetricGoodDetections.GENERAL_COLORS[int_index % len(MetricGoodDetections.GENERAL_COLORS)]
             ax.bar(ticks + index * width, get_detections_accuracy_list(results[tracker_name_with_config]), width,
                    label=tracker_name_with_config, color=colors[tracker_name_with_config])
             index += 1
