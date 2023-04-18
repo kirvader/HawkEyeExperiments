@@ -116,6 +116,9 @@ class DetectionResults:
 
 class MetricGoodDetections(MetricCounterBase):
     METRIC_NAME = "METRIC_DETECTIONS_PERCENTAGE"
+    GENERAL_COLORS = [
+            'b', 'g', 'r', 'c', 'm', 'y', 'k'
+        ]
 
     def compare_trackers_on_single_video(self,
                                          metrics_output_directory: str,
@@ -155,17 +158,28 @@ class MetricGoodDetections(MetricCounterBase):
         ticks = np.arange(4)
         index = -(len(results) / 2 - 1)
 
+        int_index = 0
+        colors = {}
+
         for tracker_name_with_config in results:
+            colors[tracker_name_with_config] = MetricGoodDetections.GENERAL_COLORS[tracker_name_with_config % len(MetricGoodDetections.GENERAL_COLORS)]
             ax.bar(ticks + index * width, get_detections_accuracy_list(results[tracker_name_with_config]), width,
-                   label=tracker_name_with_config)
+                   label=tracker_name_with_config, color=colors[tracker_name_with_config])
             index += 1
+            int_index += 1
 
         ax.set_ylabel('Quantity of detections')
         ax.set_title('Detections accuracy')
         ax.set_xticks(ticks + width / 2)
         ax.set_xticklabels(["Positive true", "Positive false", "Negative true", "Negative false"])
 
-        plt.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+        labels = list(results.keys())
+        handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
+
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width, box.height * 0.7])
+
+        plt.legend(handles, labels, loc='lower left', bbox_to_anchor=(0.0, 1))
         plt.savefig(str(current_comparison_output_directory / "accuracy.png"))
 
     def count_average_across_many_videos(self,
